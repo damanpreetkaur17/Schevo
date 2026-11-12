@@ -1,0 +1,578 @@
+
+/* =========================================
+   HOW IT WORKS SECTION
+========================================= */
+
+.how-section {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  padding: 100px 6% 55px;
+  overflow: hidden;
+
+  background: var(--bg);
+  color: var(--text);
+
+  transition:
+    background 0.4s ease,
+    color 0.4s ease;
+}
+
+.how-container {
+  position: relative;
+  z-index: 2;
+
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+
+/* =========================================
+   BACKGROUND DETAILS
+========================================= */
+
+.how-background-glow {
+  position: absolute;
+  z-index: -1;
+
+  width: 600px;
+  height: 600px;
+
+  top: 10%;
+  left: 50%;
+
+  transform: translateX(-50%);
+
+  border-radius: 50%;
+
+  background: radial-gradient(
+    circle,
+    rgba(120, 120, 120, 0.075),
+    transparent 70%
+  );
+
+  filter: blur(60px);
+  pointer-events: none;
+}
+
+.how-grid-pattern {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+
+  opacity: 0.13;
+
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+
+  background-size: 75px 75px;
+
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    black 25%,
+    black 75%,
+    transparent
+  );
+
+  pointer-events: none;
+}
+
+
+/* =========================================
+   SECTION HEADER
+========================================= */
+
+.how-header {
+  max-width: 750px;
+  margin: 0 auto 75px;
+
+  text-align: center;
+}
+
+.how-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+
+  padding: 9px 15px;
+  margin-bottom: 23px;
+
+  border: 1px solid var(--border);
+  border-radius: 30px;
+
+  background: var(--surface);
+
+  color: var(--muted);
+
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.7px;
+}
+
+.how-eyebrow-dot {
+  width: 7px;
+  height: 7px;
+
+  border-radius: 50%;
+
+  background: #777777;
+
+  box-shadow: 0 0 9px rgba(120, 120, 120, 0.4);
+}
+
+.how-header h2 {
+  font-family: var(--font-heading);
+
+  font-size: clamp(38px, 4.5vw, 59px);
+  line-height: 1.15;
+
+  font-weight: 700;
+  letter-spacing: -2.8px;
+
+  color: var(--text);
+}
+
+.how-header h2 span {
+  color: var(--muted);
+}
+
+.how-header p {
+  max-width: 570px;
+  margin: 23px auto 0;
+
+  color: var(--muted);
+
+  font-size: 15px;
+  line-height: 1.9;
+}
+
+
+/* =========================================
+   WORKFLOW GRID
+========================================= */
+
+.how-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+
+  gap: 18px;
+
+  align-items: stretch;
+}
+
+.how-step-wrapper {
+  position: relative;
+  min-width: 0;
+}
+
+
+/* =========================================
+   WORKFLOW CARD
+========================================= */
+
+.how-card {
+  position: relative;
+
+  height: 100%;
+  min-height: 370px;
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 25px 22px 20px;
+
+  border: 1px solid var(--border);
+  border-radius: 18px;
+
+  background: var(--surface);
+
+  box-shadow: var(--card-shadow);
+
+  overflow: hidden;
+
+  transition:
+    border-color 0.3s ease,
+    background 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.how-card:hover {
+  border-color: rgba(120, 120, 120, 0.4);
+
+  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.09);
+}
+
+
+/* CARD TOP */
+
+.how-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 32px;
+}
+
+.how-step-number {
+  font-family: var(--font-heading);
+
+  font-size: 30px;
+  font-weight: 700;
+
+  letter-spacing: -1.5px;
+
+  color: var(--text);
+}
+
+.how-step-label {
+  padding: 7px 9px;
+
+  border-radius: 5px;
+  border: 1px solid var(--border);
+
+  color: var(--muted);
+
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+
+/* ICON */
+
+.how-icon-box {
+  width: 57px;
+  height: 57px;
+
+  display: grid;
+  place-items: center;
+
+  margin-bottom: 24px;
+
+  color: var(--text);
+
+  background: var(--surface-2);
+
+  border: 1px solid var(--border);
+  border-radius: 14px;
+
+  transition:
+    transform 0.3s ease,
+    background 0.3s ease;
+}
+
+.how-card:hover .how-icon-box {
+  transform: translateY(-4px) rotate(-4deg);
+  background: var(--surface);
+}
+
+
+/* TITLE */
+
+.how-card h3 {
+  font-family: var(--font-heading);
+
+  color: var(--text);
+
+  font-size: 19px;
+  font-weight: 600;
+
+  letter-spacing: -0.6px;
+
+  margin-bottom: 13px;
+}
+
+
+/* DESCRIPTION */
+
+.how-card-description {
+  color: var(--muted);
+
+  font-size: 12px;
+  line-height: 1.85;
+
+  margin-bottom: 23px;
+}
+
+
+/* CARD DETAILS */
+
+.how-card-details {
+  display: flex;
+  flex-direction: column;
+
+  gap: 12px;
+
+  margin-top: auto;
+  padding-top: 19px;
+
+  border-top: 1px solid var(--border);
+}
+
+.how-detail {
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+
+  color: var(--muted);
+
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.how-check {
+  width: 17px;
+  height: 17px;
+
+  display: grid;
+  place-items: center;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+
+/* CARD BOTTOM */
+
+.how-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-top: 23px;
+  padding-top: 15px;
+
+  border-top: 1px solid var(--border);
+
+  color: var(--muted);
+
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+.how-card-bottom svg {
+  color: var(--text);
+}
+
+
+/* =========================================
+   CONNECTOR LINES
+========================================= */
+
+.how-connector {
+  position: absolute;
+
+  top: 58px;
+  right: -18px;
+
+  width: 18px;
+  height: 2px;
+
+  z-index: 5;
+
+  display: flex;
+  align-items: center;
+
+  pointer-events: none;
+}
+
+.how-connector-line {
+  width: 100%;
+  height: 1px;
+
+  transform-origin: left;
+
+  background: var(--muted);
+  opacity: 0.55;
+}
+
+.how-connector-dot {
+  position: absolute;
+  right: 0;
+
+  width: 5px;
+  height: 5px;
+
+  border-radius: 50%;
+
+  background: var(--text);
+}
+
+
+/* =========================================
+   BOTTOM STATEMENT
+========================================= */
+
+.how-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  margin-top: 40px;
+}
+
+.how-bottom p {
+  flex-shrink: 0;
+
+  color: var(--muted);
+
+  font-size: 12px;
+  font-weight: 500;
+
+  text-align: center;
+}
+
+.how-bottom p span {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.how-bottom-line {
+  width: 100%;
+  max-width: 160px;
+  height: 1px;
+
+  background: var(--border);
+}
+
+
+/* =========================================
+   TABLET
+========================================= */
+
+@media (max-width: 600px) {
+  .how-section {
+    padding: 75px 5% 40px;
+  }
+
+  .how-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+  }
+
+  .how-card {
+    min-height: 350px;
+  }
+
+  .how-connector {
+    display: none;
+  }
+
+  .how-header {
+    margin-bottom: 55px;
+  }
+}
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 600px) {
+  .how-section {
+    padding: 85px 5% 75px;
+  }
+
+  .how-header {
+    margin-bottom: 42px;
+  }
+
+  .how-header h2 {
+    font-size: 36px;
+    letter-spacing: -1.8px;
+  }
+
+  .how-header p {
+    font-size: 13px;
+    padding: 0 5px;
+  }
+
+  .how-steps {
+    grid-template-columns: 1fr;
+    gap: 17px;
+  }
+
+  .how-card {
+    min-height: auto;
+    padding: 23px 21px 19px;
+  }
+
+  .how-card-top {
+    margin-bottom: 22px;
+  }
+
+  .how-step-number {
+    font-size: 26px;
+  }
+
+  .how-icon-box {
+    width: 52px;
+    height: 52px;
+    margin-bottom: 20px;
+  }
+
+  .how-card h3 {
+    font-size: 19px;
+  }
+
+  .how-card-description {
+    font-size: 13px;
+  }
+
+  .how-detail {
+    font-size: 11px;
+  }
+
+  .how-bottom {
+    gap: 10px;
+    margin-top: 42px;
+  }
+
+  .how-bottom p {
+    font-size: 10px;
+  }
+
+  .how-bottom-line {
+    max-width: 35px;
+  }
+}
+
+
+/* =========================================
+   DARK THEME REFINEMENTS
+========================================= */
+
+:root[data-theme="dark"] .how-card:hover {
+  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.35);
+}
+
+:root[data-theme="dark"] .how-icon-box {
+  background: #252629;
+}
+
+:root[data-theme="dark"] .how-card:hover .how-icon-box {
+  background: #303135;
+}
+
+
+/* =========================================
+   REDUCED MOTION
+========================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .how-card,
+  .how-icon-box {
+    transition: none !important;
+  }
+}
+
