@@ -883,3 +883,34 @@
     animation: none !important;
   }
 }
+
+
+/* =========================================
+   HERO RESPONSIVE WIDTH FIX
+========================================= */
+
+.hero {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.architecture {
+  width: 100%;
+  max-width: 650px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Prevent children from expanding the hero */
+
+.hero > * {
+  min-width: 0;
+}
+
+/* Keep navbar within viewport */
+
+.navbar {
+  max-width: 100%;
+  box-sizing: border-box;
+}
