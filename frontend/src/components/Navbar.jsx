@@ -16,9 +16,9 @@ const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const navLinks = [
-    { name: "Features", href: "#features" },
     { name: "How It Works", href: "#how-it-works" },
-    { name: "Documentation", href: "#documentation" },
+    { name: "Features", href: "#features" },
+    { name: "Who Benefits", href: "#who-benefits" },
   ];
 
   return (
@@ -53,6 +53,7 @@ const Navbar = () => {
         {/* ACTIONS */}
         <div className="nav-actions">
 
+          {/* THEME TOGGLE */}
           <button
             className="theme-toggle"
             onClick={toggleTheme}
@@ -61,9 +62,21 @@ const Navbar = () => {
             <AnimatePresence mode="wait" initial={false}>
               <motion.span
                 key={theme}
-                initial={{ opacity: 0, rotate: -45, scale: 0.7 }}
-                animate={{ opacity: 1, rotate: 0, scale: 1 }}
-                exit={{ opacity: 0, rotate: 45, scale: 0.7 }}
+                initial={{
+                  opacity: 0,
+                  rotate: -45,
+                  scale: 0.7,
+                }}
+                animate={{
+                  opacity: 1,
+                  rotate: 0,
+                  scale: 1,
+                }}
+                exit={{
+                  opacity: 0,
+                  rotate: 45,
+                  scale: 0.7,
+                }}
                 transition={{ duration: 0.2 }}
               >
                 {theme === "light" ? (
@@ -75,18 +88,22 @@ const Navbar = () => {
             </AnimatePresence>
           </button>
 
+          {/* GET STARTED */}
           <a href="#get-started" className="nav-cta">
             Get Started
             <ArrowUpRight size={16} />
           </a>
 
+          {/* MOBILE MENU BUTTON */}
           <button
             className="mobile-menu-btn"
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="Toggle navigation"
+            aria-expanded={menuOpen}
           >
             {menuOpen ? <X /> : <Menu />}
           </button>
+
         </div>
       </div>
 
@@ -113,11 +130,13 @@ const Navbar = () => {
               href="#get-started"
               onClick={() => setMenuOpen(false)}
             >
-              Get Started <ArrowUpRight size={16} />
+              Get Started
+              <ArrowUpRight size={16} />
             </a>
           </motion.nav>
         )}
       </AnimatePresence>
+
     </motion.header>
   );
 };
