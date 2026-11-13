@@ -1,0 +1,398 @@
+
+/* =========================================
+   CTA SECTION
+========================================= */
+
+.cta-section {
+  width: 100%;
+  min-height: calc(100svh - 110px);
+  box-sizing: border-box;
+
+  padding: 25px 6% 35px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* =========================================
+   CTA PANEL
+========================================= */
+
+.cta-panel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+
+  width: 100%;
+  max-width: 1500px;
+
+  min-height: 0;
+  height: min(490px, calc(100svh - 165px));
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 35px 25px;
+  box-sizing: border-box;
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+
+  transition: background 0.3s ease;
+}
+
+/* =========================================
+   CONTENT
+========================================= */
+
+.cta-content {
+  position: relative;
+  z-index: 2;
+
+  width: 100%;
+  max-width: 900px;
+
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+
+  text-align: center;
+}
+
+/* =========================================
+   EYEBROW
+========================================= */
+
+.cta-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  margin-bottom: 19px;
+
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+}
+
+.cta-dot {
+  width: 6px;
+  height: 6px;
+
+  border-radius: 50%;
+  background: #888888;
+}
+
+/* =========================================
+   HEADING
+========================================= */
+
+.cta-content h2 {
+  margin: 0;
+
+  color: var(--text);
+
+  font-size: clamp(46px, 5vw, 64px);
+  font-weight: 750;
+
+  line-height: 1.12;
+  letter-spacing: -3px;
+}
+
+.cta-content h2 span {
+  color: var(--muted);
+}
+
+/* =========================================
+   DESCRIPTION
+========================================= */
+
+.cta-content > p {
+  margin-top: 17px;
+  margin-bottom: 0;
+
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* =========================================
+   CTA BUTTON
+========================================= */
+
+.cta-button {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+
+  margin-top: 27px;
+  padding: 8px 9px 8px 22px;
+
+  color: #ffffff;
+  background: #222222;
+
+  border: 1px solid #222222;
+  border-radius: 7px;
+
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+
+  transition:
+    background 0.3s ease,
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+}
+
+/* Shine animation */
+
+.cta-button::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+
+  top: 0;
+  left: -120%;
+
+  width: 70%;
+  height: 100%;
+
+  background: linear-gradient(
+    110deg,
+    transparent,
+    rgba(255, 255, 255, 0.25),
+    transparent
+  );
+
+  transform: skewX(-20deg);
+
+  transition: left 0.65s ease;
+}
+
+.cta-button:hover::before {
+  left: 150%;
+}
+
+.cta-button:hover {
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
+}
+
+/* =========================================
+   BUTTON ARROW
+========================================= */
+
+.cta-arrow {
+  width: 34px;
+  height: 34px;
+
+  display: grid;
+  place-items: center;
+
+  color: #222222;
+  background: #ffffff;
+
+  border-radius: 5px;
+
+  transition: transform 0.3s ease;
+}
+
+.cta-button:hover .cta-arrow {
+  transform: translate(3px, -3px);
+}
+
+/* =========================================
+   BOTTOM TEXT
+========================================= */
+
+.cta-bottom-text {
+  margin-top: 27px;
+
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+/* =========================================
+   CORNER DETAILS
+========================================= */
+
+.cta-corner {
+  position: absolute;
+
+  width: 22px;
+  height: 22px;
+
+  border-color: var(--muted);
+  opacity: 0.35;
+
+  transition:
+    width 0.3s ease,
+    height 0.3s ease,
+    opacity 0.3s ease;
+}
+
+.cta-corner.top-left {
+  top: 0;
+  left: 0;
+
+  border-top: 1px solid;
+  border-left: 1px solid;
+}
+
+.cta-corner.top-right {
+  top: 0;
+  right: 0;
+
+  border-top: 1px solid;
+  border-right: 1px solid;
+}
+
+.cta-corner.bottom-left {
+  bottom: 0;
+  left: 0;
+
+  border-bottom: 1px solid;
+  border-left: 1px solid;
+}
+
+.cta-corner.bottom-right {
+  bottom: 0;
+  right: 0;
+
+  border-bottom: 1px solid;
+  border-right: 1px solid;
+}
+
+.cta-panel:hover .cta-corner {
+  width: 34px;
+  height: 34px;
+  opacity: 0.7;
+}
+
+/* =========================================
+   DARK THEME
+========================================= */
+
+:root[data-theme="dark"] .cta-button {
+  color: #171717;
+  background: #ffffff;
+  border-color: #ffffff;
+}
+
+:root[data-theme="dark"] .cta-button:hover {
+  background: #e5e5e5;
+}
+
+:root[data-theme="dark"] .cta-arrow {
+  color: #ffffff;
+  background: #222222;
+}
+
+/* =========================================
+   RESPONSIVE - TABLET
+========================================= */
+
+@media (max-width: 768px) {
+  .cta-section {
+    min-height: auto;
+    padding: 35px 5%;
+  }
+
+  .cta-panel {
+    height: auto;
+    min-height: 370px;
+    padding: 45px 18px;
+  }
+
+  .cta-content h2 {
+    font-size: clamp(34px, 7vw, 46px);
+    letter-spacing: -1.8px;
+  }
+
+  .cta-content > p {
+    max-width: 340px;
+    font-size: 12px;
+  }
+
+  .cta-bottom-text {
+    margin-top: 25px;
+  }
+}
+
+/* =========================================
+   RESPONSIVE - MOBILE
+========================================= */
+
+@media (max-width: 420px) {
+  .cta-section {
+    padding: 25px 4%;
+  }
+
+  .cta-panel {
+    min-height: 350px;
+    padding: 35px 14px;
+  }
+
+  .cta-content h2 {
+    font-size: 31px;
+    letter-spacing: -1.3px;
+  }
+
+  .cta-content > p {
+    font-size: 11px;
+  }
+
+  .cta-eyebrow {
+    font-size: 8px;
+  }
+
+  .cta-bottom-text {
+    font-size: 7px;
+    letter-spacing: 1.5px;
+  }
+}
+
+/* =========================================
+   SHORT DESKTOP SCREENS
+========================================= */
+
+@media (max-height: 700px) and (min-width: 769px) {
+  .cta-panel {
+    height: 430px;
+  }
+
+  .cta-content h2 {
+    font-size: 48px;
+  }
+
+  .cta-bottom-text {
+    margin-top: 18px;
+  }
+}
+
+/* =========================================
+   ACCESSIBILITY
+========================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .cta-button,
+  .cta-button::before,
+  .cta-arrow,
+  .cta-corner {
+    transition: none !important;
+  }
+}
