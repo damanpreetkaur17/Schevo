@@ -5,7 +5,6 @@ import {
   ArrowUpRight,
   ArrowRight,
   CheckCircle2,
-  Sparkles,
 } from "lucide-react";
 
 import ArchitectureVisual from "./ArchitectureVisual";

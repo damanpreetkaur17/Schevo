@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
+    "test": "node --test src/domain/schema/schema.test.js src/services/schemaRepository.test.js",
     "preview": "vite preview"
   },
   "dependencies": {

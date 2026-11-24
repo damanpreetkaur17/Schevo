@@ -1,0 +1,587 @@
+.developer-page {
+  min-width: 0;
+}
+
+.api-workspace,
+.docs-workspace {
+  display: grid;
+  min-height: 610px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.api-workspace {
+  grid-template-columns: 250px minmax(0, 1fr) 330px;
+  overflow: hidden;
+}
+
+.api-route-nav,
+.docs-nav {
+  min-width: 0;
+  padding: 14px;
+  border-right: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.api-route-nav .dashboard-search-input,
+.docs-nav .dashboard-search-input {
+  margin-bottom: 12px;
+}
+
+.method-filters {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.method-filters button {
+  padding: 5px 7px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.method-filters button.is-active,
+.method-filters button:hover {
+  background: var(--text);
+  color: var(--bg);
+}
+
+.api-route-nav details {
+  margin-top: 9px;
+}
+
+.api-route-nav summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 2px;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.api-route-nav details[open] summary svg {
+  transform: rotate(180deg);
+}
+
+.api-route-nav details > button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 37px minmax(0, 1fr) 14px;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 6px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  text-align: left;
+}
+
+.api-route-nav details > button:hover,
+.api-route-nav details > button.is-active {
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.api-route-nav details > button span {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.api-route-nav details > button small {
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--muted);
+  font: 9px ui-monospace, monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.method-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  padding: 3px 4px;
+  border-radius: 4px;
+  font: 8px ui-monospace, monospace;
+  font-weight: 700;
+}
+
+.method-get { background: rgba(76, 154, 112, 0.14); color: #3d855d; }
+.method-post { background: rgba(62, 111, 178, 0.14); color: #396da7; }
+.method-patch { background: rgba(177, 122, 53, 0.16); color: #996729; }
+.method-delete { background: rgba(179, 74, 74, 0.14); color: #a04b4b; }
+
+.api-main {
+  min-width: 0;
+  overflow: auto;
+  padding: 24px;
+}
+
+.api-main-header,
+.api-endpoint-doc > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.api-main-header {
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.api-main-header h2 {
+  margin: 4px 0 0;
+  font: 21px var(--font-heading);
+}
+
+.api-main-header p {
+  margin-top: 7px;
+  color: var(--muted);
+  font: 11px ui-monospace, monospace;
+}
+
+.api-endpoint-doc {
+  padding-top: 22px;
+}
+
+.api-endpoint-doc h2 {
+  display: inline-block;
+  margin: 4px 0 0 8px;
+  font: 16px ui-monospace, monospace;
+  vertical-align: middle;
+}
+
+.api-endpoint-doc > p,
+.api-doc-grid p {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.auth-badge,
+.public-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 7px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.api-doc-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.api-doc-grid > div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+}
+
+.api-doc-grid strong,
+.api-status-row strong {
+  font-size: 10px;
+}
+
+.api-doc-grid pre,
+.api-code-samples pre,
+.console-result pre {
+  max-height: 180px;
+  overflow: auto;
+  margin: 8px 0 0;
+  color: var(--muted);
+  font: 10px/1.6 ui-monospace, monospace;
+  white-space: pre-wrap;
+}
+
+.api-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  margin: 14px 0;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.api-code-samples {
+  display: grid;
+  gap: 7px;
+  margin-bottom: 14px;
+}
+
+.api-code-samples details {
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg);
+}
+
+.api-code-samples summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.api-code-samples summary .secondary-button {
+  margin-left: auto;
+}
+
+.api-console {
+  min-width: 0;
+  overflow: auto;
+  padding: 16px;
+  border-left: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.api-console > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.api-console > header strong {
+  display: block;
+  margin-top: 4px;
+  font: 11px ui-monospace, monospace;
+}
+
+.api-console label {
+  display: grid;
+  gap: 5px;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.api-console input,
+.api-console select,
+.api-console textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  outline: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 10px ui-monospace, monospace;
+}
+
+.api-console textarea {
+  resize: vertical;
+}
+
+.console-auth {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 12px 0;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.console-actions {
+  display: flex;
+  gap: 7px;
+  margin-top: 14px;
+}
+
+.console-result {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.console-result > strong {
+  display: block;
+  color: var(--text);
+  font-size: 11px;
+}
+
+.console-result > small {
+  display: block;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.api-console-empty {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.api-console-empty strong {
+  color: var(--text);
+  font-size: 12px;
+}
+
+.api-console-empty p {
+  max-width: 220px;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.developer-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 14px;
+}
+
+.developer-actions > span {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.docs-workspace {
+  grid-template-columns: 235px minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.docs-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: auto;
+}
+
+.docs-nav > strong {
+  margin: 9px 3px 4px;
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.docs-nav .docs-nav-label {
+  margin-top: 20px;
+}
+
+.docs-nav button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 7px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  text-align: left;
+  font-size: 10px;
+}
+
+.docs-nav button:hover,
+.docs-nav button.is-active {
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.docs-article {
+  min-width: 0;
+  overflow: auto;
+  padding: 30px clamp(22px, 5vw, 72px);
+}
+
+.docs-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.docs-breadcrumb span {
+  color: var(--accent-2);
+}
+
+.docs-article > h2 {
+  margin: 18px 0 12px;
+  font: 28px var(--font-heading);
+}
+
+.docs-article > p,
+.docs-article > ol,
+.docs-article > ul {
+  max-width: 720px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.docs-article li {
+  margin: 5px 0;
+}
+
+.docs-callout {
+  display: grid;
+  gap: 4px;
+  max-width: 720px;
+  margin: 18px 0;
+  padding: 13px;
+  border-left: 3px solid var(--accent);
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.docs-callout strong {
+  color: var(--text);
+}
+
+.project-doc-section {
+  max-width: 800px;
+  margin-top: 28px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.project-doc-section h3 {
+  margin: 0 0 7px;
+  font: 17px var(--font-heading);
+}
+
+.project-doc-section > p {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.project-table-reference {
+  display: grid;
+  gap: 5px;
+  margin-top: 11px;
+  padding: 11px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface-2);
+}
+
+.project-table-reference strong {
+  font-size: 11px;
+}
+
+.project-table-reference span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.project-table-reference code {
+  color: var(--text);
+}
+
+.docs-prev-next {
+  display: flex;
+  justify-content: space-between;
+  max-width: 800px;
+  margin-top: 32px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 1100px) {
+  .api-workspace {
+    grid-template-columns: 215px minmax(0, 1fr) 290px;
+  }
+}
+
+@media (max-width: 850px) {
+  .api-workspace,
+  .docs-workspace {
+    display: block;
+    min-height: 0;
+  }
+
+  .api-route-nav,
+  .docs-nav {
+    max-height: 280px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .api-main {
+    min-height: 600px;
+  }
+
+  .api-console {
+    min-height: 500px;
+    border-top: 1px solid var(--border);
+    border-left: 0;
+  }
+
+  .docs-article {
+    min-height: 600px;
+  }
+}
+
+@media (max-width: 600px) {
+  .api-doc-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .api-main-header,
+  .api-endpoint-doc > header {
+    flex-direction: column;
+  }
+}
+
+@media print {
+  .dashboard-sidebar,
+  .dashboard-topbar,
+  .dashboard-page-header,
+  .docs-nav,
+  .developer-actions {
+    display: none !important;
+  }
+
+  .dashboard-main,
+  .docs-article {
+    padding: 0;
+  }
+
+  .docs-workspace {
+    display: block;
+    border: 0;
+  }
+}

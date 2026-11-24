@@ -1,16 +1,19 @@
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
-
-const ThemeContext = createContext(null);
+import { useEffect, useState } from "react";
+import { ThemeContext } from "./ThemeContextCore";
+import { useTheme } from "./useTheme";
 
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => {
-    return localStorage.getItem("schevo-theme") || "light";
+    const storedTheme = localStorage.getItem("schevo-theme");
+
+    if (storedTheme === "light" || storedTheme === "dark") {
+      return storedTheme;
+    }
+
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
   });
 
   useEffect(() => {
@@ -31,14 +34,6 @@ export const ThemeProvider = ({ children }) => {
   );
 };
 
-export const useTheme = () => {
-  const context = useContext(ThemeContext);
-
-  if (!context) {
-    throw new Error(
-      "useTheme must be used inside ThemeProvider"
-    );
-  }
-
-  return context;
-};
+// Keep the original context import path working for landing-page components.
+// eslint-disable-next-line react-refresh/only-export-components
+export { useTheme };

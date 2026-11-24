@@ -1,13 +1,17 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { useTheme } from "../context/ThemeContext";
+import { useAuth } from "../context/AuthContextCore";
+import { useTheme } from "../context/useTheme";
+import { apiRequest } from "../services/apiClient";
 import "./../styles/Auth.css";
 
 function Auth({ mode = "login" }) {
   const navigate = useNavigate();
+  const { status, refresh } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const [submitting, setSubmitting] = useState(false);
 
   const isLogin = mode === "login";
 
@@ -44,7 +48,11 @@ function Auth({ mode = "login" }) {
     navigate(newMode === "login" ? "/login" : "/signup");
   };
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    if (status === "ready") navigate("/dashboard", { replace: true });
+  }, [status, navigate]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
@@ -59,8 +67,12 @@ function Auth({ mode = "login" }) {
         return;
       }
 
-      if (formData.password.length < 8) {
-        setError("Password must contain at least 8 characters.");
+      if (
+        formData.password.length < 8 ||
+        !/[A-Za-z]/.test(formData.password) ||
+        !/\d/.test(formData.password)
+      ) {
+        setError("Password must contain at least 8 characters with a letter and a number.");
         return;
       }
 
@@ -70,8 +82,23 @@ function Auth({ mode = "login" }) {
       }
     }
 
-    // Backend API integration will be added next.
-    setError("Authentication API is not connected yet.");
+    setSubmitting(true);
+    try {
+      if (isLogin) {
+        await apiRequest("/api/v1/auth/login", { method: "POST", body: { email: formData.email.trim(), password: formData.password } });
+      } else {
+        await apiRequest("/api/v1/auth/signup", {
+          method: "POST",
+          body: { displayName: formData.name.trim(), email: formData.email.trim(), password: formData.password },
+        });
+      }
+      await refresh();
+      navigate("/dashboard", { replace: true });
+    } catch (requestError) {
+      setError(requestError.message || "Could not sign you in.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -270,8 +297,8 @@ function Auth({ mode = "login" }) {
                 </div>
               )}
 
-              <button type="submit" className="auth-submit">
-                <span>{isLogin ? "Sign In" : "Create Account"}</span>
+              <button type="submit" className="auth-submit" disabled={submitting}>
+                <span>{submitting ? "Please wait..." : isLogin ? "Sign In" : "Create Account"}</span>
                 <span className="auth-submit-arrow">↗</span>
               </button>
             </motion.form>
