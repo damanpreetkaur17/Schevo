@@ -20,23 +20,44 @@ export async function apiRequestDetailed(path, { method = "GET", body } = {}) {
   const token = csrfToken || readCookie("schevo.csrf");
   if (token && method !== "GET" && method !== "HEAD") headers["x-csrf-token"] = token;
   const started = performance.now();
-  const response = await fetch(path, {
-    method,
-    headers,
-    credentials: "include",
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
-  const data = await response.json().catch(() => ({}));
+  let response;
+  try {
+    response = await fetch(path, {
+      method,
+      headers,
+      credentials: "include",
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  } catch (requestError) {
+    const reason = requestError instanceof Error ? `: ${requestError.message}` : "";
+    const error = new Error(`Could not connect to the Schevo API. Check that the platform server is running${reason}.`);
+    error.cause = requestError;
+    throw error;
+  }
+
+  const contentType = response.headers?.get?.("content-type") || "";
+  const hasResponseHeaders = Boolean(response.headers);
+  const data = contentType.includes("application/json") || !hasResponseHeaders
+    ? await response.json().catch(() => ({}))
+    : {};
   if (data.csrfToken) csrfToken = data.csrfToken;
   const responseHeaders = response.headers && typeof response.headers.entries === "function"
     ? Object.fromEntries(response.headers.entries())
     : {};
   const result = { status: response.status, duration: Math.round(performance.now() - started), headers: responseHeaders, data };
   if (!response.ok) {
-    const error = new Error(data.message || "Request failed.");
+    const message = data.message || (
+      response.status >= 500 && !contentType.includes("application/json")
+        ? "Could not reach the Schevo API. Check that the platform server is running."
+        : "Request failed."
+    );
+    const error = new Error(message);
     error.status = response.status;
     error.result = result;
     throw error;
+  }
+  if (hasResponseHeaders && !contentType.includes("application/json")) {
+    throw new Error("The Schevo API returned an unexpected response.");
   }
   return result;
 }
