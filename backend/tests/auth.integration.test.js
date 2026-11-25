@@ -58,6 +58,20 @@ test.after(async () => {
   }
 });
 
+test("health endpoints return JSON and do not intercept platform routes", async () => {
+  const root = await request(base, jar(), "/");
+  assert.equal(root.status, 200);
+  assert.equal(root.data.success, true);
+
+  const health = await request(base, jar(), "/api/v1/health");
+  assert.equal(health.status, 200);
+  assert.equal(health.data.ok, true);
+
+  const anonymous = await request(base, jar(), "/api/v1/projects");
+  assert.equal(anonymous.status, 401);
+  assert.equal(typeof anonymous.data.message, "string");
+});
+
 test("registration, session restore, project persistence, and authorization", async () => {
   const email = `schevo.phase2.${Date.now()}@example.com`;
   testEmails.add(email);

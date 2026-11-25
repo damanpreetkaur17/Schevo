@@ -34,9 +34,9 @@ export function createApp() {
   app.use(cookieParser());
   app.use(pinoHttp({ logger, autoLogging: { ignore: (request) => request.url === "/api/v1/health" } }));
 
-  app.use("/", (req, res)=>{
-    res.send("Server starting");
-  })
+  app.get("/", (request, response) => {
+    response.json({ success: true, message: "Schevo backend is running." });
+  });
   app.use("/api/auth", rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 100,
