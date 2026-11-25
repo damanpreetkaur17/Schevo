@@ -7,11 +7,12 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "test": "node --test src/domain/schema/schema.test.js src/services/schemaRepository.test.js src/services/apiClient.test.js",
+    "test": "node --test src/domain/schema/schema.test.js src/services/schemaRepository.test.js src/services/apiClient.test.js src/services/backendGenerator.test.js",
     "preview": "vite preview"
   },
   "dependencies": {
     "framer-motion": "^14.13.0",
+    "jszip": "^3.10.2",
     "lucide-react": "^1.72.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",

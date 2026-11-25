@@ -3,6 +3,7 @@ import { Check, ChevronDown, Database, GitBranch, LayoutGrid, Minus, PanelRight,
 import { NavLink, useNavigate, useParams } from "react-router-dom";
 import { createJunctionTable, eligibleReferenceColumns, eligibleReferenceKeys, relationshipForColumn, setForeignKey, setForeignKeyColumns } from "../../domain/schema/mutate";
 import { canonicalizeSchema } from "../../domain/schema/model";
+import { createGeneratedBackendArchive, createProjectApiEndpoints, generateProjectApiKey } from "../../services/backendGenerator";
 import { apiRequest } from "../../services/apiClient";
 import { REFERENTIAL_ACTIONS, TYPE_OPTIONS } from "../../domain/schema/types";
 import { isAccountMode, persistenceState, saveProjectNow, schemaRepository, schemaToSql, subscribePersistence, validateSchema, validationStatus } from "../../services/schemaRepository";
@@ -26,6 +27,9 @@ function ProjectWorkspace() {
   const [pointer, setPointer] = useState(null);
   const [zoom, setZoom] = useState(100);
   const [notice, setNotice] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedBackend, setGeneratedBackend] = useState(null);
+  const [copyMessage, setCopyMessage] = useState("");
   const [saveInfo, setSaveInfo] = useState(() => persistenceState(projectId));
   const firstSchemaEffect = useRef(true);
   const problems = useMemo(() => validateSchema(schema), [schema]);
@@ -75,6 +79,43 @@ function ProjectWorkspace() {
   const autoLayout = () => updateSchema({ ...schema, tables: schema.tables.map((item, index) => ({ ...item, x: 80 + (index % 3) * 280, y: 70 + Math.floor(index / 3) * 230 })) });
   const zoomIn = () => setZoom((value) => Math.min(200, value + 10));
   const zoomOut = () => setZoom((value) => Math.max(50, value - 10));
+  const generateBackend = async () => {
+    setIsGenerating(true);
+    setNotice("");
+    try {
+      const apiKey = generateProjectApiKey();
+      const archive = await createGeneratedBackendArchive({ projectName: project.name, schema, apiKey });
+      const url = URL.createObjectURL(archive.blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = archive.fileName;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setGeneratedBackend({
+        apiKey,
+        fileName: archive.fileName,
+        files: Object.keys(archive.files),
+        generatedAt: new Date().toISOString(),
+      });
+      setCopyMessage("");
+      navigate(`/dashboard/projects/${projectId}/code`);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Backend generation failed.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+  const copyApiKey = async () => {
+    if (!generatedBackend?.apiKey) return;
+    try {
+      await navigator.clipboard.writeText(generatedBackend.apiKey);
+      setCopyMessage("API key copied.");
+    } catch {
+      setCopyMessage("Could not copy the API key. Select and copy it manually.");
+    }
+  };
   const undo = () => { const previous = history.at(-1); if (!previous) return; setFuture((items) => [schema, ...items]); setSchema(previous); setHistory((items) => items.slice(0, -1)); };
   const redo = () => { const next = future[0]; if (!next) return; setHistory((items) => [...items, schema]); setSchema(next); setFuture((items) => items.slice(1)); };
   const sql = schemaToSql(schema);
@@ -102,10 +143,11 @@ function ProjectWorkspace() {
     <div className="project-workspace">
       <header className="project-header">
         <div><span className="dashboard-eyebrow">Project</span><h1>{project.name}</h1><p>{project.description}</p></div>
-        <div className="project-header-status"><Badge tone={problems.some((problem) => problem.severity === "error") ? "warning" : problems.length ? "neutral" : "success"}>{problems.some((problem) => problem.severity === "error") ? `${problems.filter((problem) => problem.severity === "error").length} errors` : problems.length ? `${problems.length} notes` : "Valid"}</Badge><SaveIndicator projectId={projectId} saveInfo={saveInfo} /><button className="primary-button" type="button" onClick={() => setNotice("Backend generation is not connected yet. SQL preview is available in the designer.")}><Wand2 size={15} /> Generate backend</button></div>
+        <div className="project-header-status"><Badge tone={problems.some((problem) => problem.severity === "error") ? "warning" : problems.length ? "neutral" : "success"}>{problems.some((problem) => problem.severity === "error") ? `${problems.filter((problem) => problem.severity === "error").length} errors` : problems.length ? `${problems.length} notes` : "Valid"}</Badge><SaveIndicator projectId={projectId} saveInfo={saveInfo} /><button className="primary-button" type="button" onClick={generateBackend} disabled={isGenerating} aria-busy={isGenerating}><Wand2 size={15} /> {isGenerating ? "Generating…" : "Generate backend"}</button></div>
       </header>
       <nav className="project-tabs" aria-label="Project workspace"><NavLink to={`/dashboard/projects/${projectId}/design`}>Design</NavLink><NavLink to={`/dashboard/projects/${projectId}/code`}>Code</NavLink><NavLink to={`/dashboard/projects/${projectId}/api`}>API</NavLink><NavLink to={`/dashboard/projects/${projectId}/history`}>History</NavLink><NavLink to={`/dashboard/projects/${projectId}/settings`}>Settings</NavLink></nav>
-      {area !== "design" ? <WorkspaceArea area={area} project={project} schema={schema} /> : <div className="design-layout">
+      {notice && area !== "design" && <p className="generation-notice" role="alert">{notice}</p>}
+      {area !== "design" ? <WorkspaceArea area={area} project={project} schema={schema} generatedBackend={generatedBackend} copyApiKey={copyApiKey} copyMessage={copyMessage} /> : <div className="design-layout">
         <aside className="schema-explorer">
           <div className="workspace-panel-heading"><div><span>Schema</span><strong>{schema.tables.length} tables</strong></div><button className="icon-button" type="button" aria-label="Add table" onClick={addTable}><Plus size={16} /></button></div>
           <label className="workspace-search"><Search size={14} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find tables..." /></label>
@@ -395,7 +437,7 @@ function TableNode({ table, zoom, selected, onSelect, onMove, onColumnSelect, on
   return <article className={`table-node ${selected ? "is-selected" : ""} ${dragging ? "is-dragging" : ""}`} style={{ left: table.x, top: table.y }} onMouseDown={start} onClick={onSelect}><header><Database size={14} /><strong>{table.name}</strong><button type="button" aria-label={`Select ${table.name}`} onClick={onSelect}><ChevronDown size={14} /></button></header>{table.columns.map((column) => <div className={`table-column-row ${connectionStart?.columnId === column.id ? "is-connection-source" : ""}`} key={column.id}><button className="table-column" type="button" onClick={(event) => { event.stopPropagation(); onColumnSelect(column.id); }}><span className="table-column-label">{column.primaryKey && <b title="Primary key">PK</b>}{column.foreignKey && <b title="Foreign key">FK</b>}{column.unique && !column.primaryKey && <b title="Unique">UQ</b>}{!column.nullable && <b title="Not null">NN</b>}{column.name}</span><small>{column.type}</small></button><button className={`connection-handle ${relationshipMode ? "is-visible" : ""}`} type="button" aria-label={`Connect ${table.name}.${column.name}`} title="Connect this column" onMouseDown={(event) => { event.stopPropagation(); onConnectionStart(column.id); }} onMouseUp={(event) => { event.stopPropagation(); if (connectionStart) onConnectionEnd(column.id); }} /></div>)}</article>;
 }
 
-function WorkspaceArea({ area, project, schema }) {
+function WorkspaceArea({ area, project, schema, generatedBackend, copyApiKey, copyMessage }) {
   const sql = schemaToSql(schema);
   const [versions, setVersions] = useState([]);
   const [historyState, setHistoryState] = useState("idle");
@@ -409,8 +451,31 @@ function WorkspaceArea({ area, project, schema }) {
     return () => { active = false; };
   }, [area, project.id]);
   const visibleHistoryState = area === "history" && !isAccountMode() ? "local-only" : historyState === "idle" ? "loading" : historyState;
-  if (area === "code") return <section className="area-page"><PageHeader eyebrow="Generated backend" title="Code" description="Application generation is not connected. The SQL below is the real migration preview for this schema." /><pre className="code-preview"><code>{sql || "-- Add a table to produce SQL."}</code></pre></section>;
-  if (area === "api") return <section className="area-page"><PageHeader eyebrow="Generated API" title="API explorer" description="No API has been generated for this project. Endpoints will appear here only after a backend is generated from this schema." /><EmptyState title="No generated endpoints" description={`${schema.tables.length} tables are in the schema. Schevo will not list example routes until generation exists.`} /></section>;
+  if (area === "code") return <section className="area-page">
+    <PageHeader eyebrow="Generated backend" title="Code" description="Download a runnable Express and PostgreSQL backend generated from this project's schema." />
+    {generatedBackend ? <div className="generated-backend">
+      <div className="generated-backend-heading"><div><strong>{generatedBackend.fileName}</strong><span>Generated {new Date(generatedBackend.generatedAt).toLocaleString()}</span></div><Badge tone="success">Ready</Badge></div>
+      <section className="generated-api-key"><div><h2>Project API key</h2><p>This key is included in the ZIP's local <code>.env</code>. Keep it private; it is shown only in this open workspace.</p></div><button className="secondary-button compact" type="button" onClick={copyApiKey}>Copy key</button><code className="generated-api-key-value">{generatedBackend.apiKey}</code>{copyMessage && <span className="field-success" role="status">{copyMessage}</span>}</section>
+      <section><h2>Included files</h2><ul className="generated-file-list">{generatedBackend.files.map((file) => <li key={file}><code>{file}</code></li>)}</ul></section>
+      <p className="generated-backend-next">Unzip the download, review <code>.env</code>, then run <code>npm install</code>, <code>npm test</code>, and <code>npm start</code>. See the included README for endpoint details.</p>
+    </div> : <EmptyState title="No backend generated yet" description={`${schema.tables.length} schema table${schema.tables.length === 1 ? "" : "s"} will be turned into a downloadable Express + PostgreSQL backend. Each table needs a primary key for complete CRUD endpoints.`} />}
+    <details className="generated-sql-details"><summary>Preview generated PostgreSQL schema</summary><pre className="code-preview"><code>{sql || "-- Add a table to produce SQL."}</code></pre></details>
+  </section>;
+  if (area === "api") {
+    const endpoints = createProjectApiEndpoints(schema);
+    return <section className="area-page">
+      <PageHeader eyebrow="Generated API" title="API explorer" description="These project-specific CRUD routes are included in the downloadable backend. Deploy that backend to make the routes live." />
+      <div className="generated-api-base"><strong>Local development base URL</strong><code>http://localhost:4000</code><span>Use your deployed host instead after deployment. Data endpoints require the generated key in the <code>x-api-key</code> header.</span></div>
+      {generatedBackend && <div className="generated-api-key generated-api-key-compact"><div><h2>Project API key</h2><code className="generated-api-key-value">{generatedBackend.apiKey}</code>{copyMessage && <span className="field-success" role="status">{copyMessage}</span>}</div><button className="secondary-button compact" type="button" onClick={copyApiKey}>Copy key</button></div>}
+      {schema.tables.some((table) => !table.constraints.some((constraint) => constraint.type === "primaryKey")) && <p className="field-error" role="status">Add a primary key to each table to generate its complete CRUD endpoints.</p>}
+      <div className="generated-endpoints">
+        <div className="generated-endpoint-row"><span className="endpoint-method method-get">GET</span><code>/health</code><span>Check server and database availability (no key required)</span></div>
+        {endpoints.map((endpoint) => <div className="generated-endpoint-row" key={`${endpoint.method}:${endpoint.path}`}><span className={`endpoint-method method-${endpoint.method.toLowerCase()}`}>{endpoint.method}</span><code>{endpoint.path}</code><span>{endpoint.description}</span></div>)}
+      </div>
+      <pre className="generated-api-example"><code>{`curl -H "x-api-key: ${generatedBackend?.apiKey || "<PROJECT_API_KEY>"}" http://localhost:4000${endpoints[0]?.path || "/api/<table>"}`}</code></pre>
+      <p className="generated-backend-next">Record keys in item routes are URL-safe values returned as <code>key</code> by list and create responses. The API is hosted by your deployed generated backend, not by Schevo.</p>
+    </section>;
+  }
   if (area === "history") return <section className="area-page"><PageHeader eyebrow="Schema evolution" title="History" description="Schema snapshots are recorded when a schema save is confirmed by the platform." />{visibleHistoryState === "loading" && <p role="status">Loading schema versions…</p>}{visibleHistoryState === "error" && <p className="field-error" role="alert">Could not load schema history.</p>}{visibleHistoryState === "local-only" && <p className="panel-empty">This preview project is stored in this browser. Remote schema snapshots are available after signing in.</p>}{visibleHistoryState === "ready" && <div className="timeline">{versions.map((version, index) => <div className={`timeline-item ${index === 0 ? "is-current" : ""}`} key={version.version}><span className="timeline-dot" /><div><strong>{index === 0 ? "Current schema" : `Schema version ${version.version}`}</strong><p>{version.schema.tables.length} tables · {version.schema.relationships.length} relationships · {new Date(version.createdAt).toLocaleString()}</p><small>By {version.createdBy}</small></div></div>)}</div>}</section>;
   return <ProjectSettings project={project} />;
 }
