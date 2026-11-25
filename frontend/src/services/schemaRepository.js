@@ -236,7 +236,6 @@ function ensureProjects() {
       relationshipCount: 1,
       validation: "Warnings",
       generation: "Out of date",
-      starred: true,
       schema: clone(seedSchema),
       lastArea: "design",
     },
@@ -323,7 +322,6 @@ function queueAccountSave(id) {
       relationshipCount: project.relationshipCount,
       validation: project.validation,
       generation: project.generation,
-      starred: Boolean(project.starred),
       version: project.version,
     };
     try {
@@ -415,7 +413,6 @@ export const schemaRepository = {
       relationshipCount: 0,
       validation: "Not validated",
       generation: "Never generated",
-      starred: false,
       schema,
       lastArea: "design",
     };

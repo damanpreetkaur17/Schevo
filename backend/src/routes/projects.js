@@ -20,7 +20,6 @@ const projectWrite = z.object({
   relationshipCount: z.number().int().nonnegative().optional(),
   validation: z.string().max(40).optional(),
   generation: z.string().max(40).optional(),
-  starred: z.boolean().optional(),
   lastArea: z.string().max(40).optional(),
   version: z.number().int().positive().optional(),
 });
@@ -35,7 +34,6 @@ function present(row) {
     relationshipCount: row.relationship_count,
     validation: row.validation,
     generation: row.generation,
-    starred: row.starred,
     schema: row.schema,
     lastArea: row.last_area || "design",
     version: row.version,
@@ -74,8 +72,8 @@ router.post("/", requireCsrf, asyncRoute(async (request, response) => {
   const schema = parsed.data.schema || { tables: [], relationships: [] };
   const created = await withTransaction(async (client) => {
     const result = await client.query(
-      `INSERT INTO projects (workspace_id, name, description, schema, table_count, relationship_count, validation, generation, starred)
-       VALUES ($1, $2, $3, $4::jsonb, $5, $6, $7, $8, $9)
+      `INSERT INTO projects (workspace_id, name, description, schema, table_count, relationship_count, validation, generation)
+       VALUES ($1, $2, $3, $4::jsonb, $5, $6, $7, $8)
        RETURNING *`,
       [
         workspace.rows[0].workspace_id,
@@ -86,7 +84,6 @@ router.post("/", requireCsrf, asyncRoute(async (request, response) => {
         parsed.data.relationshipCount ?? schema.relationships.length,
         parsed.data.validation || "Not validated",
         parsed.data.generation || "Never generated",
-        Boolean(parsed.data.starred),
       ],
     );
     const project = result.rows[0];
@@ -142,10 +139,9 @@ router.patch("/:projectId", requireCsrf, asyncRoute(async (request, response) =>
          relationship_count = $5,
          validation = $6,
          generation = $7,
-         starred = $8,
          version = version + 1,
          updated_at = now()
-       WHERE id = $9 AND version = $10
+       WHERE id = $8 AND version = $9
        RETURNING *`,
       [
         parsed.data.name ?? current.name,
@@ -155,7 +151,6 @@ router.patch("/:projectId", requireCsrf, asyncRoute(async (request, response) =>
         parsed.data.relationshipCount ?? schema.relationships?.length ?? current.relationship_count,
         parsed.data.validation ?? current.validation,
         parsed.data.generation ?? current.generation,
-        parsed.data.starred ?? current.starred,
         current.id,
         parsed.data.version ?? current.version,
       ],
