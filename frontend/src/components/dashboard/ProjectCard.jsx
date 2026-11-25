@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, Boxes, GitBranch, Star, Trash2, X } from "lucide-react";
+import { ArrowUpRight, Boxes, GitBranch, Trash2, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { projectRepository } from "../../services/projectRepository";
 import SchemaThumbnail from "./SchemaThumbnail";
@@ -31,10 +31,6 @@ function ProjectCard({ project, onDeleted }) {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const cancelButtonRef = useRef(null);
-  const toggleStar = (event) => {
-    event.stopPropagation();
-    projectRepository.update(project.id, { starred: !project.starred });
-  };
   useEffect(() => {
     if (!deleteOpen) return undefined;
     cancelButtonRef.current?.focus();
@@ -70,9 +66,6 @@ function ProjectCard({ project, onDeleted }) {
           </div>
           <SchemaThumbnail schema={project.schema} />
           <div className="project-card-actions">
-            <button className={`icon-button project-star ${project.starred ? "is-starred" : ""}`} type="button" aria-label={`${project.starred ? "Unstar" : "Star"} ${project.name}`} onClick={toggleStar}>
-              <Star size={16} fill={project.starred ? "currentColor" : "none"} />
-            </button>
             <button className="icon-button project-open" type="button" aria-label={`Open ${project.name}`} onClick={() => navigate(`/dashboard/projects/${project.id}/design`)}>
               <ArrowUpRight size={18} />
             </button>
