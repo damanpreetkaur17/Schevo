@@ -35,7 +35,7 @@ const setAuthCookie = (res, token) => {
   res.cookie("auth_token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     path: "/",
     maxAge: getTokenLifetimeMs(),
   });
@@ -188,7 +188,7 @@ export const logout = (req, res) => {
   res.clearCookie("auth_token", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     path: "/",
   });
 

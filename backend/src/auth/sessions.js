@@ -48,7 +48,7 @@ export async function revokeUserSessions(userId, client = null) {
 export function sessionCookieOptions(production) {
   return {
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: production ? "none" : "lax",
     secure: production,
     path: "/",
     maxAge: WEEK,
