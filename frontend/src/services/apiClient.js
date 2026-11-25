@@ -1,4 +1,10 @@
+const API_BASE_URL = import.meta.env?.VITE_API_URL?.replace(/\/+$/, "") || "";
 let csrfToken = "";
+
+export function resolveApiUrl(path, baseUrl = API_BASE_URL) {
+  const base = baseUrl.replace(/\/+$/, "");
+  return base ? `${base}${path.startsWith("/") ? path : `/${path}`}` : path;
+}
 
 function readCookie(name) {
   const match = document.cookie.split("; ").find((item) => item.startsWith(`${name}=`));
@@ -22,7 +28,7 @@ export async function apiRequestDetailed(path, { method = "GET", body } = {}) {
   const started = performance.now();
   let response;
   try {
-    response = await fetch(path, {
+    response = await fetch(resolveApiUrl(path), {
       method,
       headers,
       credentials: "include",

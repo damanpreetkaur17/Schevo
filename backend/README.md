@@ -29,6 +29,9 @@ Configure `backend/.env` with:
 
 Keep `.env` local and do not commit it. The Vite proxy uses the origin in
 `frontend/.env`'s `VITE_API_URL`; if unset, it targets `http://localhost:4000`.
+For a deployed frontend, set its `VITE_API_URL` build environment variable to
+the backend origin (for example, `https://schevo.onrender.com`) so API requests
+go to the backend rather than the frontend host.
 
 For an existing database, run:
 

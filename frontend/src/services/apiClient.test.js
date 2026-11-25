@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, test } from "node:test";
-import { apiRequestDetailed, clearCsrf } from "./apiClient.js";
+import { apiRequestDetailed, clearCsrf, resolveApiUrl } from "./apiClient.js";
 
 const originalFetch = globalThis.fetch;
 const originalDocument = globalThis.document;
@@ -29,6 +29,14 @@ test("reports when the development proxy cannot reach the platform API", async (
     apiRequestDetailed("/api/v1/auth/login", { method: "POST", body: { email: "test@example.com", password: "pass" } }),
     /Could not reach the Schevo API/,
   );
+});
+
+test("resolves API requests against the configured backend URL", () => {
+  assert.equal(
+    resolveApiUrl("/api/v1/auth/login", "https://schevo.onrender.com/"),
+    "https://schevo.onrender.com/api/v1/auth/login",
+  );
+  assert.equal(resolveApiUrl("/api/v1/auth/login", ""), "/api/v1/auth/login");
 });
 
 test("reports a network connection failure to the platform API", async () => {
