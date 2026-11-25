@@ -92,6 +92,7 @@ function Auth({ mode = "login" }) {
           body: { displayName: formData.name.trim(), email: formData.email.trim(), password: formData.password },
         });
       }
+      if (typeof window !== "undefined") window.localStorage?.setItem("schevo.has_session", "true");
       await refresh();
       navigate("/dashboard", { replace: true });
     } catch (requestError) {

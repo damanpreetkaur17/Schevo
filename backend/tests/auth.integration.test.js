@@ -155,7 +155,8 @@ test("registration, session restore, project persistence, and authorization", as
 
   await request(base, cookies, "/api/v1/auth/logout", { method: "POST", csrf: me.data.csrfToken, body: {} });
   const signedOut = await request(base, cookies, "/api/v1/auth/me");
-  assert.equal(signedOut.status, 401);
+  assert.equal(signedOut.status, 200);
+  assert.equal(signedOut.data.user, null);
 
   const loginCookies = jar();
   const badLogin = await request(base, loginCookies, "/api/v1/auth/login", {
@@ -190,7 +191,8 @@ test("registration, session restore, project persistence, and authorization", as
   });
   assert.equal(passwordChanged.status, 200);
   const oldPasswordSession = await request(base, priorSession, "/api/v1/auth/me");
-  assert.equal(oldPasswordSession.status, 401);
+  assert.equal(oldPasswordSession.status, 200);
+  assert.equal(oldPasswordSession.data.user, null);
   const rotatedSession = await request(base, loginCookies, "/api/v1/auth/me");
   assert.equal(rotatedSession.status, 200);
   const secondDevice = await request(base, jar(), "/api/v1/auth/login", {

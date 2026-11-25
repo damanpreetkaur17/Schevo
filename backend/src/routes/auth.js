@@ -84,7 +84,10 @@ router.post("/logout", requireUser, requireCsrf, asyncRoute(async (request, resp
 }));
 
 router.get("/me", asyncRoute(async (request, response) => {
-  if (!request.user) throw new HttpError(401, "Sign in to continue.");
+  if (!request.user) {
+    response.json({ user: null, workspace: null, csrfToken: null });
+    return;
+  }
   const workspace = await query(
     `SELECT workspaces.id, workspaces.name FROM workspaces
      JOIN workspace_members ON workspace_members.workspace_id = workspaces.id

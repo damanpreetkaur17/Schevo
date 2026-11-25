@@ -47,6 +47,13 @@ export async function apiRequestDetailed(path, { method = "GET", body } = {}) {
     ? await response.json().catch(() => ({}))
     : {};
   if (data.csrfToken) csrfToken = data.csrfToken;
+  if (response.ok && typeof window !== "undefined" && window.localStorage) {
+    if (path.includes("/auth/login") || path.includes("/auth/signup") || path.includes("/auth/register")) {
+      window.localStorage.setItem("schevo.has_session", "true");
+    } else if (path.includes("/auth/logout")) {
+      window.localStorage.removeItem("schevo.has_session");
+    }
+  }
   const responseHeaders = response.headers && typeof response.headers.entries === "function"
     ? Object.fromEntries(response.headers.entries())
     : {};

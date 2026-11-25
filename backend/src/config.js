@@ -34,12 +34,16 @@ if (!testing && !process.env.JWT_SECRET) {
   throw new Error("JWT_SECRET must be configured for the legacy /api/auth endpoints.");
 }
 
-const normalizeOrigin = (origin) => origin?.trim().replace(/\/+$/, "");
-const configuredOrigins = [...new Set(
-  [process.env.CLIENT_ORIGIN, process.env.FRONTEND_URL]
-    .map(normalizeOrigin)
-    .filter(Boolean),
-)];
+const parseOrigins = (raw) =>
+  (raw || "")
+    .split(",")
+    .map((origin) => origin.trim().replace(/\/+$/, ""))
+    .filter(Boolean);
+
+const configuredOrigins = [...new Set([
+  ...parseOrigins(process.env.CLIENT_ORIGIN),
+  ...parseOrigins(process.env.FRONTEND_URL),
+])];
 
 export const config = {
   port: Number(process.env.PORT || 4000),
