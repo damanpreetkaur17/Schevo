@@ -180,9 +180,18 @@ router.patch("/:projectId", requireCsrf, asyncRoute(async (request, response) =>
 }));
 
 router.delete("/:projectId", requireCsrf, asyncRoute(async (request, response) => {
-  const current = await ownedProject(request.user.id, request.params.projectId);
-  if (!current) throw new HttpError(404, "Project not found.");
-  await query("DELETE FROM projects WHERE id = $1", [current.id]);
+  const parsedId = z.string().uuid().safeParse(request.params.projectId);
+  if (!parsedId.success) throw new HttpError(400, "Project ID is not valid.");
+  const deleted = await withTransaction((client) => client.query(
+    `DELETE FROM projects
+     USING workspace_members
+     WHERE projects.id = $1
+       AND workspace_members.workspace_id = projects.workspace_id
+       AND workspace_members.user_id = $2
+     RETURNING projects.id`,
+    [parsedId.data, request.user.id],
+  ));
+  if (!deleted.rowCount) throw new HttpError(404, "Project not found.");
   response.json({ ok: true });
 }));
 

@@ -442,4 +442,21 @@ export const schemaRepository = {
     }
     return clone(projects[index]);
   },
+  async prepareDelete(id) {
+    const timer = saveTimers.get(id);
+    if (timer) window.clearTimeout(timer);
+    saveTimers.delete(id);
+    const pendingSave = saveQueues.get(id);
+    if (pendingSave) await pendingSave.catch(() => undefined);
+    const queuedTimer = saveTimers.get(id);
+    if (queuedTimer) window.clearTimeout(queuedTimer);
+    saveTimers.delete(id);
+  },
+  remove(id) {
+    writeProjects(ensureProjects().filter((project) => project.id !== id));
+    removeDraft(id);
+    saveTimers.delete(id);
+    saveQueues.delete(id);
+    persistenceStates.delete(id);
+  },
 };

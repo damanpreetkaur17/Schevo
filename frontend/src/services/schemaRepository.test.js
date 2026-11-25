@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { adoptAccountProjects, leaveAccount, persistenceState, saveProjectNow, schemaRepository, subscribePersistence } from "./schemaRepository.js";
+import { projectRepository } from "./projectRepository.js";
 
 const values = new Map();
 globalThis.window = {
@@ -109,4 +110,35 @@ test("simultaneous save requests share one request and preview mode stays local"
   const project = await schemaRepository.create({ name: "Preview mode", description: "" });
   schemaRepository.update(project.id, { name: "Local edit" });
   assert.equal(persistenceState("project-test").status, "local-only");
+});
+
+test("account project deletion calls the API and preserves cached data on failure", async () => {
+  leaveAccount();
+  adoptAccountProjects([serverProject()], "deletion-user");
+  let requestUrl;
+  let requestOptions;
+  globalThis.fetch = async (url, options) => {
+    requestUrl = url;
+    requestOptions = options;
+    return response(200, { ok: true });
+  };
+
+  await projectRepository.delete("project-test");
+  assert.equal(requestUrl, "/api/v1/projects/project-test");
+  assert.equal(requestOptions.method, "DELETE");
+  assert.equal(requestOptions.credentials, "include");
+  assert.equal(requestOptions.headers["x-csrf-token"], "test-token");
+  assert.deepEqual(schemaRepository.list(), []);
+
+  adoptAccountProjects([serverProject()], "deletion-user");
+  globalThis.fetch = async () => response(503, { message: "Could not delete project." });
+  await assert.rejects(projectRepository.delete("project-test"), /Could not delete project/);
+  assert.equal(schemaRepository.list().length, 1);
+});
+
+test("preview project deletion removes the local project", async () => {
+  leaveAccount();
+  const project = await schemaRepository.create({ name: "Preview deletion", description: "" });
+  await projectRepository.delete(project.id);
+  assert.equal(schemaRepository.get(project.id), null);
 });
