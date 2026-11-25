@@ -144,11 +144,6 @@ Contributions and suggestions are welcome!
 4. Commit and push your changes.
 5. Open a Pull Request.
 
-## 📄 License
-
-This project is developed for academic purposes as part of a Bachelor of Engineering (B.E.) project.
-
----
 
 <p align="center">
 
