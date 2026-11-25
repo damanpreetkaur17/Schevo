@@ -108,6 +108,25 @@
   min-height: 100%;
 }
 
+.canvas-world {
+  position: relative;
+  flex: none;
+}
+
+.canvas-world-content {
+  position: relative;
+  transform-origin: top left;
+}
+
+.canvas-notice {
+  position: absolute;
+  top: 58px;
+  left: 14px;
+  z-index: 5;
+  max-width: calc(100% - 28px);
+  margin: 0;
+}
+
 @media (min-width: 851px) {
   .design-layout {
     height: calc(100vh - 230px);

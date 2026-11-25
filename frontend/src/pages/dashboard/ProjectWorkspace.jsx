@@ -24,12 +24,15 @@ function ProjectWorkspace() {
   const [relationshipMode, setRelationshipMode] = useState(false);
   const [connectionStart, setConnectionStart] = useState(null);
   const [pointer, setPointer] = useState(null);
+  const [zoom, setZoom] = useState(100);
   const [notice, setNotice] = useState("");
   const [saveInfo, setSaveInfo] = useState(() => persistenceState(projectId));
   const firstSchemaEffect = useRef(true);
   const problems = useMemo(() => validateSchema(schema), [schema]);
   const statusLabel = validationStatus(problems);
   const table = schema.tables.find((item) => item.id === selectedTable);
+  const canvasWidth = Math.max(900, ...schema.tables.map((item) => item.x + 280));
+  const canvasHeight = Math.max(700, ...schema.tables.map((item) => item.y + Math.max(180, item.columns.length * 36 + 70)));
 
   useEffect(() => { if (!initial) navigate("/dashboard/projects"); }, [initial, navigate]);
   useEffect(() => {
@@ -70,6 +73,8 @@ function ProjectWorkspace() {
   };
   const deleteTable = () => { updateSchema({ ...schema, tables: schema.tables.filter((item) => item.id !== selectedTable), relationships: schema.relationships.filter((item) => item.sourceTable !== selectedTable && item.targetTable !== selectedTable) }); setSelectedTable(null); };
   const autoLayout = () => updateSchema({ ...schema, tables: schema.tables.map((item, index) => ({ ...item, x: 80 + (index % 3) * 280, y: 70 + Math.floor(index / 3) * 230 })) });
+  const zoomIn = () => setZoom((value) => Math.min(200, value + 10));
+  const zoomOut = () => setZoom((value) => Math.max(50, value - 10));
   const undo = () => { const previous = history.at(-1); if (!previous) return; setFuture((items) => [schema, ...items]); setSchema(previous); setHistory((items) => items.slice(0, -1)); };
   const redo = () => { const next = future[0]; if (!next) return; setHistory((items) => [...items, schema]); setSchema(next); setFuture((items) => items.slice(1)); };
   const sql = schemaToSql(schema);
@@ -108,8 +113,44 @@ function ProjectWorkspace() {
           {!schema.tables.length && <p className="panel-empty">Add a table to start designing your schema.</p>}
         </aside>
         <section className="schema-canvas" aria-label="Schema canvas">
-          <div className="canvas-toolbar"><button type="button" title="Add table" onClick={addTable}><Plus size={15} /></button><button className={relationshipMode ? "is-active" : ""} type="button" title="Create relationship" aria-pressed={relationshipMode} onClick={() => { setRelationshipMode((value) => !value); setConnectionStart(null); }}><GitBranch size={15} /></button><button type="button" title="Auto layout" onClick={autoLayout}><LayoutGrid size={15} /></button><button type="button" title="Zoom out"><Minus size={15} /></button><span>100%</span><button type="button" title="Zoom in"><Plus size={15} /></button><span className="toolbar-divider" /><button type="button" title="Undo" onClick={undo} disabled={!history.length}><Undo2 size={15} /></button><button type="button" title="Redo" onClick={redo} disabled={!future.length}><Redo2 size={15} /></button><button className="inspector-toggle" type="button" title="Toggle inspector" aria-label="Toggle inspector" aria-pressed={inspectorOpen} onClick={() => setInspectorOpen((open) => !open)}><PanelRight size={15} /></button></div>
-          <div className="canvas-grid" onMouseMove={(event) => { if (!connectionStart) return; const rect = event.currentTarget.getBoundingClientRect(); setPointer({ x: event.clientX - rect.left, y: event.clientY - rect.top }); }}><svg className="relationship-layer" aria-hidden="true">{schema.relationships.map((relationship) => { const source = schema.tables.find((item) => item.id === relationship.sourceTable); const target = schema.tables.find((item) => item.id === relationship.targetTable); if (!source || !target) return null; return <path key={relationship.id} d={`M ${source.x + 230} ${source.y + 64} C ${source.x + 290} ${source.y + 64}, ${target.x - 60} ${target.y + 64}, ${target.x} ${target.y + 64}`} />; })}{connectionStart && pointer && (() => { const source = schema.tables.find((item) => item.id === connectionStart.tableId); return source ? <path className="connection-preview" d={`M ${source.x + 230} ${source.y + 64} C ${source.x + 280} ${source.y + 64}, ${pointer.x - 50} ${pointer.y}, ${pointer.x} ${pointer.y}`} /> : null; })()}</svg>{schema.tables.map((item) => <TableNode key={item.id} table={item} selected={item.id === selectedTable} connectionStart={connectionStart} relationshipMode={relationshipMode} onSelect={() => { setSelectedTable(item.id); setSelectedColumn(null); }} onMove={(x, y) => updateSchema({ ...schema, tables: schema.tables.map((current) => current.id === item.id ? { ...current, x, y } : current) })} onColumnSelect={(columnId) => selectColumnForRelationship(item.id, columnId)} onConnectionStart={(columnId) => { setConnectionStart({ tableId: item.id, columnId }); setRelationshipMode(true); }} onConnectionEnd={(columnId) => createRelationship(item.id, columnId)} />)}</div>
+          <div className="canvas-toolbar">
+            <button type="button" title="Add table" aria-label="Add table" onClick={addTable}><Plus size={15} /></button>
+            <button className={relationshipMode ? "is-active" : ""} type="button" title="Create relationship" aria-label="Create relationship" aria-pressed={relationshipMode} onClick={() => { setRelationshipMode((value) => !value); setConnectionStart(null); }}><GitBranch size={15} /></button>
+            <button type="button" title="Auto layout" aria-label="Auto layout" onClick={autoLayout}><LayoutGrid size={15} /></button>
+            <button type="button" title="Zoom out" aria-label="Zoom out" onClick={zoomOut} disabled={zoom <= 50}><Minus size={15} /></button>
+            <span aria-live="polite">{zoom}%</span>
+            <button type="button" title="Zoom in" aria-label="Zoom in" onClick={zoomIn} disabled={zoom >= 200}><Plus size={15} /></button>
+            <span className="toolbar-divider" />
+            <button type="button" title="Undo" aria-label="Undo" onClick={undo} disabled={!history.length}><Undo2 size={15} /></button>
+            <button type="button" title="Redo" aria-label="Redo" onClick={redo} disabled={!future.length}><Redo2 size={15} /></button>
+            <button className="inspector-toggle" type="button" title="Toggle inspector" aria-label="Toggle inspector" aria-pressed={inspectorOpen} onClick={() => setInspectorOpen((open) => !open)}><PanelRight size={15} /></button>
+          </div>
+          <div className="canvas-grid" onMouseMove={(event) => {
+            if (!connectionStart) return;
+            const rect = event.currentTarget.getBoundingClientRect();
+            setPointer({
+              x: (event.clientX - rect.left + event.currentTarget.scrollLeft) * 100 / zoom,
+              y: (event.clientY - rect.top + event.currentTarget.scrollTop) * 100 / zoom,
+            });
+          }}>
+            <div className="canvas-world" style={{ width: `${canvasWidth * zoom / 100}px`, height: `${canvasHeight * zoom / 100}px` }}>
+              <div className="canvas-world-content" style={{ width: `${canvasWidth}px`, height: `${canvasHeight}px`, transform: `scale(${zoom / 100})` }}>
+                <svg className="relationship-layer" aria-hidden="true">
+                  {schema.relationships.map((relationship) => {
+                    const source = schema.tables.find((item) => item.id === relationship.sourceTable);
+                    const target = schema.tables.find((item) => item.id === relationship.targetTable);
+                    if (!source || !target) return null;
+                    return <path key={relationship.id} d={`M ${source.x + 230} ${source.y + 64} C ${source.x + 290} ${source.y + 64}, ${target.x - 60} ${target.y + 64}, ${target.x} ${target.y + 64}`} />;
+                  })}
+                  {connectionStart && pointer && (() => {
+                    const source = schema.tables.find((item) => item.id === connectionStart.tableId);
+                    return source ? <path className="connection-preview" d={`M ${source.x + 230} ${source.y + 64} C ${source.x + 280} ${source.y + 64}, ${pointer.x - 50} ${pointer.y}, ${pointer.x} ${pointer.y}`} /> : null;
+                  })()}
+                </svg>
+                {schema.tables.map((item) => <TableNode key={item.id} table={item} zoom={zoom} selected={item.id === selectedTable} connectionStart={connectionStart} relationshipMode={relationshipMode} onSelect={() => { setSelectedTable(item.id); setSelectedColumn(null); }} onMove={(x, y) => updateSchema({ ...schema, tables: schema.tables.map((current) => current.id === item.id ? { ...current, x, y } : current) })} onColumnSelect={(columnId) => selectColumnForRelationship(item.id, columnId)} onConnectionStart={(columnId) => { setConnectionStart({ tableId: item.id, columnId }); setRelationshipMode(true); }} onConnectionEnd={(columnId) => createRelationship(item.id, columnId)} />)}
+              </div>
+            </div>
+          </div>
           {notice && <p className="canvas-notice" role="status">{notice}</p>}
           <div className="canvas-help">{connectionStart ? "Choose the referencing column. The first column is the referenced key." : relationshipMode ? "Select the referenced column, then the foreign-key column" : "Hover a column to connect handles · Drag tables to arrange your schema"}</div>
           <div className="bottom-panel"><div className="bottom-tabs">{[["problems", "Problems", problems.length], ["sql", "SQL preview", null], ["changes", "Changes", history.length]].map(([value, label, count]) => <button key={value} className={panel === value ? "is-active" : ""} type="button" onClick={() => setPanel(value)}>{label}{count ? <b>{count}</b> : null}</button>)}</div>{panel === "problems" && <div className="bottom-content">{problems.length ? problems.map((problem) => <button key={problem.id} type="button" onClick={() => problem.tableId && setSelectedTable(problem.tableId)}><span className={`problem-dot ${problem.severity}`} />{problem.message}</button>) : <p><Check size={15} /> No validation problems found.</p>}</div>}{panel === "sql" && <div className="sql-panel"><div className="sql-panel-actions"><button className="secondary-button compact" type="button" onClick={() => navigator.clipboard.writeText(sql || "")}>Copy SQL</button><button className="secondary-button compact" type="button" onClick={() => { const blob = new Blob([sql || ""], { type: "text/sql" }); const url = URL.createObjectURL(blob); const link = document.createElement("a"); link.href = url; link.download = `${project.name.replace(/[^a-z0-9]+/gi, "-").toLowerCase() || "schema"}.sql`; link.click(); URL.revokeObjectURL(url); }}>Download</button></div><pre className="sql-preview">{sql || "-- Add a table to preview PostgreSQL SQL"}</pre></div>}{panel === "changes" && <div className="bottom-content"><p>{history.length ? `${history.length} local change${history.length === 1 ? "" : "s"} ready to review.` : "Your local changes will appear here."}</p></div>}</div>
@@ -348,9 +389,9 @@ function RelationshipEditor({ schema, table, onSchema }) {
   </section>;
 }
 
-function TableNode({ table, selected, onSelect, onMove, onColumnSelect, onConnectionStart, onConnectionEnd, relationshipMode, connectionStart }) {
+function TableNode({ table, zoom, selected, onSelect, onMove, onColumnSelect, onConnectionStart, onConnectionEnd, relationshipMode, connectionStart }) {
   const [dragging, setDragging] = useState(false);
-  const start = (event) => { if (event.target.closest("button")) return; setDragging(true); const originX = event.clientX; const originY = event.clientY; const initialX = table.x; const initialY = table.y; const move = (moveEvent) => onMove(initialX + moveEvent.clientX - originX, initialY + moveEvent.clientY - originY); const end = () => { setDragging(false); window.removeEventListener("mousemove", move); window.removeEventListener("mouseup", end); }; window.addEventListener("mousemove", move); window.addEventListener("mouseup", end); };
+  const start = (event) => { if (event.target.closest("button")) return; setDragging(true); const originX = event.clientX; const originY = event.clientY; const initialX = table.x; const initialY = table.y; const scale = zoom / 100; const move = (moveEvent) => onMove(initialX + (moveEvent.clientX - originX) / scale, initialY + (moveEvent.clientY - originY) / scale); const end = () => { setDragging(false); window.removeEventListener("mousemove", move); window.removeEventListener("mouseup", end); }; window.addEventListener("mousemove", move); window.addEventListener("mouseup", end); };
   return <article className={`table-node ${selected ? "is-selected" : ""} ${dragging ? "is-dragging" : ""}`} style={{ left: table.x, top: table.y }} onMouseDown={start} onClick={onSelect}><header><Database size={14} /><strong>{table.name}</strong><button type="button" aria-label={`Select ${table.name}`} onClick={onSelect}><ChevronDown size={14} /></button></header>{table.columns.map((column) => <div className={`table-column-row ${connectionStart?.columnId === column.id ? "is-connection-source" : ""}`} key={column.id}><button className="table-column" type="button" onClick={(event) => { event.stopPropagation(); onColumnSelect(column.id); }}><span className="table-column-label">{column.primaryKey && <b title="Primary key">PK</b>}{column.foreignKey && <b title="Foreign key">FK</b>}{column.unique && !column.primaryKey && <b title="Unique">UQ</b>}{!column.nullable && <b title="Not null">NN</b>}{column.name}</span><small>{column.type}</small></button><button className={`connection-handle ${relationshipMode ? "is-visible" : ""}`} type="button" aria-label={`Connect ${table.name}.${column.name}`} title="Connect this column" onMouseDown={(event) => { event.stopPropagation(); onConnectionStart(column.id); }} onMouseUp={(event) => { event.stopPropagation(); if (connectionStart) onConnectionEnd(column.id); }} /></div>)}</article>;
 }
 
