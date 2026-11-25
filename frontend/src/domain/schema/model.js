@@ -1,4 +1,5 @@
 import { parseType } from "./types.js";
+import { findAvailableTablePosition } from "./layout.js";
 
 export const SCHEMA_VERSION = 2;
 
@@ -8,7 +9,7 @@ function stableConstraintId(prefix, tableId, columns) {
   return `${prefix}:${tableId}:${columns.join(":")}`;
 }
 
-function canonicalizeTable(table, migrateLegacyFlags) {
+function canonicalizeTable(table, migrateLegacyFlags, position) {
   const columns = (table.columns || []).map((column) => {
     const parsed = parseType(column.type);
     return {
@@ -63,9 +64,9 @@ function canonicalizeTable(table, migrateLegacyFlags) {
   return {
     ...table,
     description: table.description || "",
-    position: table.position || { x: Number(table.x) || 0, y: Number(table.y) || 0 },
-    x: table.position?.x ?? table.x ?? 0,
-    y: table.position?.y ?? table.y ?? 0,
+    position,
+    x: position.x,
+    y: position.y,
     columns: nextColumns,
     constraints: normalizedConstraints,
     indexes,
@@ -76,7 +77,21 @@ function canonicalizeTable(table, migrateLegacyFlags) {
 export function canonicalizeSchema(input) {
   const source = input && typeof input === "object" ? clone(input) : {};
   const migrateLegacyFlags = Number(source.schemaVersion || 1) < SCHEMA_VERSION;
-  const tables = (source.tables || []).map((table) => canonicalizeTable(table, migrateLegacyFlags));
+  const legacyStackedDefaults = source.tables?.length > 1 && source.tables.every((table, index) => {
+    const x = table.x ?? table.position?.x;
+    const y = table.y ?? table.position?.y;
+    return Number(x) === 120 + index * 30 && Number(y) === 120 + index * 30;
+  });
+  const tables = [];
+  (source.tables || []).forEach((table) => {
+    const x = table.x ?? table.position?.x;
+    const y = table.y ?? table.position?.y;
+    const hasPosition = !legacyStackedDefaults && Number.isFinite(Number(x)) && Number.isFinite(Number(y));
+    const position = hasPosition
+      ? { x: Number(x), y: Number(y) }
+      : findAvailableTablePosition(tables, table);
+    tables.push(canonicalizeTable(table, migrateLegacyFlags, position));
+  });
   const tableByIdOrName = (value) => tables.find((table) => table.id === value || table.name === value);
   const relationships = (source.relationships || []).map((relationship) => {
     const referencedTable = tableByIdOrName(relationship.sourceTable);
