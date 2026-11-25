@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Link } from "react-router-dom";
 import {
   Sun,
   Moon,
@@ -89,10 +90,10 @@ const Navbar = () => {
           </button>
 
           {/* GET STARTED */}
-          <a href="#get-started" className="nav-cta">
+          <Link to="/login" className="nav-cta">
             Get Started
             <ArrowUpRight size={16} />
-          </a>
+          </Link>
 
           {/* MOBILE MENU BUTTON */}
           <button
@@ -126,13 +127,13 @@ const Navbar = () => {
               </a>
             ))}
 
-            <a
-              href="#get-started"
+            <Link
+              to="/login"
               onClick={() => setMenuOpen(false)}
             >
               Get Started
               <ArrowUpRight size={16} />
-            </a>
+            </Link>
           </motion.nav>
         )}
       </AnimatePresence>
