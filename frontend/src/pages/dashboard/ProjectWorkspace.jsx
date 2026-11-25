@@ -3,6 +3,7 @@ import { Check, ChevronDown, Database, GitBranch, LayoutGrid, Minus, PanelRight,
 import { NavLink, useNavigate, useParams } from "react-router-dom";
 import { createJunctionTable, eligibleReferenceColumns, eligibleReferenceKeys, relationshipForColumn, setForeignKey, setForeignKeyColumns } from "../../domain/schema/mutate";
 import { canonicalizeSchema } from "../../domain/schema/model";
+import { findAvailableTablePosition } from "../../domain/schema/layout";
 import { createGeneratedBackendArchive, createProjectApiEndpoints, generateProjectApiKey } from "../../services/backendGenerator";
 import { apiRequest } from "../../services/apiClient";
 import { REFERENTIAL_ACTIONS, TYPE_OPTIONS } from "../../domain/schema/types";
@@ -25,6 +26,7 @@ function ProjectWorkspace() {
   const [relationshipMode, setRelationshipMode] = useState(false);
   const [connectionStart, setConnectionStart] = useState(null);
   const [pointer, setPointer] = useState(null);
+  const [dragPosition, setDragPosition] = useState(null);
   const [zoom, setZoom] = useState(100);
   const [notice, setNotice] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -35,8 +37,11 @@ function ProjectWorkspace() {
   const problems = useMemo(() => validateSchema(schema), [schema]);
   const statusLabel = validationStatus(problems);
   const table = schema.tables.find((item) => item.id === selectedTable);
-  const canvasWidth = Math.max(900, ...schema.tables.map((item) => item.x + 280));
-  const canvasHeight = Math.max(700, ...schema.tables.map((item) => item.y + Math.max(180, item.columns.length * 36 + 70)));
+  const canvasTables = schema.tables.map((item) => item.id === dragPosition?.tableId
+    ? { ...item, x: dragPosition.x, y: dragPosition.y }
+    : item);
+  const canvasWidth = Math.max(900, ...canvasTables.map((item) => item.x + 280));
+  const canvasHeight = Math.max(700, ...canvasTables.map((item) => item.y + Math.max(180, item.columns.length * 36 + 70)));
 
   useEffect(() => { if (!initial) navigate("/dashboard/projects"); }, [initial, navigate]);
   useEffect(() => {
@@ -52,7 +57,8 @@ function ProjectWorkspace() {
   const updateSchema = (next) => { const normalized = canonicalizeSchema(next); setHistory((items) => [...items.slice(-19), schema]); setFuture([]); setSchema(normalized); };
   const addTable = () => {
     const id = `table-${Date.now()}`;
-    updateSchema({ ...schema, tables: [...schema.tables, { id, name: "new_table", description: "", x: 120 + schema.tables.length * 30, y: 120 + schema.tables.length * 30, columns: [{ id: `${id}-id`, name: "id", type: "uuid", nullable: false }], constraints: [{ id: `pk:${id}:${id}-id`, type: "primaryKey", columns: [`${id}-id`] }] }] });
+    const newTable = { id, name: "new_table", description: "", ...findAvailableTablePosition(schema.tables, { columns: [{ id: `${id}-id` }] }), columns: [{ id: `${id}-id`, name: "id", type: "uuid", nullable: false }], constraints: [{ id: `pk:${id}:${id}-id`, type: "primaryKey", columns: [`${id}-id`] }] };
+    updateSchema({ ...schema, tables: [...schema.tables, newTable] });
     setSelectedTable(id); setSelectedColumn(null);
   };
   const updateTable = (patch) => updateSchema({ ...schema, tables: schema.tables.map((item) => item.id === selectedTable ? { ...item, ...patch } : item) });
@@ -76,7 +82,11 @@ function ProjectWorkspace() {
     updateTable({ columns, constraints });
   };
   const deleteTable = () => { updateSchema({ ...schema, tables: schema.tables.filter((item) => item.id !== selectedTable), relationships: schema.relationships.filter((item) => item.sourceTable !== selectedTable && item.targetTable !== selectedTable) }); setSelectedTable(null); };
-  const autoLayout = () => updateSchema({ ...schema, tables: schema.tables.map((item, index) => ({ ...item, x: 80 + (index % 3) * 280, y: 70 + Math.floor(index / 3) * 230 })) });
+  const autoLayout = () => {
+    const tables = [];
+    schema.tables.forEach((item) => tables.push({ ...item, ...findAvailableTablePosition(tables, item) }));
+    updateSchema({ ...schema, tables });
+  };
   const zoomIn = () => setZoom((value) => Math.min(200, value + 10));
   const zoomOut = () => setZoom((value) => Math.max(50, value - 10));
   const generateBackend = async () => {
@@ -179,17 +189,17 @@ function ProjectWorkspace() {
               <div className="canvas-world-content" style={{ width: `${canvasWidth}px`, height: `${canvasHeight}px`, transform: `scale(${zoom / 100})` }}>
                 <svg className="relationship-layer" aria-hidden="true">
                   {schema.relationships.map((relationship) => {
-                    const source = schema.tables.find((item) => item.id === relationship.sourceTable);
-                    const target = schema.tables.find((item) => item.id === relationship.targetTable);
+                    const source = canvasTables.find((item) => item.id === relationship.sourceTable);
+                    const target = canvasTables.find((item) => item.id === relationship.targetTable);
                     if (!source || !target) return null;
                     return <path key={relationship.id} d={`M ${source.x + 230} ${source.y + 64} C ${source.x + 290} ${source.y + 64}, ${target.x - 60} ${target.y + 64}, ${target.x} ${target.y + 64}`} />;
                   })}
                   {connectionStart && pointer && (() => {
-                    const source = schema.tables.find((item) => item.id === connectionStart.tableId);
+                    const source = canvasTables.find((item) => item.id === connectionStart.tableId);
                     return source ? <path className="connection-preview" d={`M ${source.x + 230} ${source.y + 64} C ${source.x + 280} ${source.y + 64}, ${pointer.x - 50} ${pointer.y}, ${pointer.x} ${pointer.y}`} /> : null;
                   })()}
                 </svg>
-                {schema.tables.map((item) => <TableNode key={item.id} table={item} zoom={zoom} selected={item.id === selectedTable} connectionStart={connectionStart} relationshipMode={relationshipMode} onSelect={() => { setSelectedTable(item.id); setSelectedColumn(null); }} onMove={(x, y) => updateSchema({ ...schema, tables: schema.tables.map((current) => current.id === item.id ? { ...current, x, y } : current) })} onColumnSelect={(columnId) => selectColumnForRelationship(item.id, columnId)} onConnectionStart={(columnId) => { setConnectionStart({ tableId: item.id, columnId }); setRelationshipMode(true); }} onConnectionEnd={(columnId) => createRelationship(item.id, columnId)} />)}
+                {schema.tables.map((item) => <TableNode key={item.id} table={item} zoom={zoom} selected={item.id === selectedTable} connectionStart={connectionStart} relationshipMode={relationshipMode} onSelect={() => { setSelectedTable(item.id); setSelectedColumn(null); }} onMovePreview={(x, y) => setDragPosition({ tableId: item.id, x, y })} onMove={(x, y) => { if (x !== item.x || y !== item.y) updateSchema({ ...schema, tables: schema.tables.map((current) => current.id === item.id ? { ...current, x, y } : current) }); setDragPosition(null); }} onColumnSelect={(columnId) => selectColumnForRelationship(item.id, columnId)} onConnectionStart={(columnId) => { setConnectionStart({ tableId: item.id, columnId }); setRelationshipMode(true); }} onConnectionEnd={(columnId) => createRelationship(item.id, columnId)} />)}
               </div>
             </div>
           </div>
@@ -431,10 +441,42 @@ function RelationshipEditor({ schema, table, onSchema }) {
   </section>;
 }
 
-function TableNode({ table, zoom, selected, onSelect, onMove, onColumnSelect, onConnectionStart, onConnectionEnd, relationshipMode, connectionStart }) {
+function TableNode({ table, zoom, selected, onSelect, onMovePreview, onMove, onColumnSelect, onConnectionStart, onConnectionEnd, relationshipMode, connectionStart }) {
   const [dragging, setDragging] = useState(false);
-  const start = (event) => { if (event.target.closest("button")) return; setDragging(true); const originX = event.clientX; const originY = event.clientY; const initialX = table.x; const initialY = table.y; const scale = zoom / 100; const move = (moveEvent) => onMove(initialX + (moveEvent.clientX - originX) / scale, initialY + (moveEvent.clientY - originY) / scale); const end = () => { setDragging(false); window.removeEventListener("mousemove", move); window.removeEventListener("mouseup", end); }; window.addEventListener("mousemove", move); window.addEventListener("mouseup", end); };
-  return <article className={`table-node ${selected ? "is-selected" : ""} ${dragging ? "is-dragging" : ""}`} style={{ left: table.x, top: table.y }} onMouseDown={start} onClick={onSelect}><header><Database size={14} /><strong>{table.name}</strong><button type="button" aria-label={`Select ${table.name}`} onClick={onSelect}><ChevronDown size={14} /></button></header>{table.columns.map((column) => <div className={`table-column-row ${connectionStart?.columnId === column.id ? "is-connection-source" : ""}`} key={column.id}><button className="table-column" type="button" onClick={(event) => { event.stopPropagation(); onColumnSelect(column.id); }}><span className="table-column-label">{column.primaryKey && <b title="Primary key">PK</b>}{column.foreignKey && <b title="Foreign key">FK</b>}{column.unique && !column.primaryKey && <b title="Unique">UQ</b>}{!column.nullable && <b title="Not null">NN</b>}{column.name}</span><small>{column.type}</small></button><button className={`connection-handle ${relationshipMode ? "is-visible" : ""}`} type="button" aria-label={`Connect ${table.name}.${column.name}`} title="Connect this column" onMouseDown={(event) => { event.stopPropagation(); onConnectionStart(column.id); }} onMouseUp={(event) => { event.stopPropagation(); if (connectionStart) onConnectionEnd(column.id); }} /></div>)}</article>;
+  const drag = useRef(null);
+  const [position, setPosition] = useState({ x: table.x, y: table.y });
+
+  useEffect(() => {
+    if (!drag.current) setPosition({ x: table.x, y: table.y });
+  }, [table.x, table.y]);
+
+  const start = (event) => {
+    if (event.button !== 0 || event.target.closest("button")) return;
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    drag.current = { pointerId: event.pointerId, originX: event.clientX, originY: event.clientY, x: table.x, y: table.y };
+    setPosition({ x: table.x, y: table.y });
+    setDragging(true);
+    onSelect();
+  };
+  const move = (event) => {
+    if (!drag.current || drag.current.pointerId !== event.pointerId) return;
+    const scale = zoom / 100;
+    const nextPosition = {
+      x: Math.max(0, drag.current.x + (event.clientX - drag.current.originX) / scale),
+      y: Math.max(0, drag.current.y + (event.clientY - drag.current.originY) / scale),
+    };
+    setPosition(nextPosition);
+    onMovePreview(nextPosition.x, nextPosition.y);
+  };
+  const end = (event) => {
+    if (!drag.current || drag.current.pointerId !== event.pointerId) return;
+    drag.current = null;
+    setDragging(false);
+    onMove(position.x, position.y);
+  };
+
+  return <article className={`table-node ${selected ? "is-selected" : ""} ${dragging ? "is-dragging" : ""}`} style={{ left: position.x, top: position.y, zIndex: dragging ? 10 : selected ? 3 : 2 }} onClick={onSelect}><header onPointerDown={start} onPointerMove={move} onPointerUp={end} onPointerCancel={end}><Database size={14} /><strong>{table.name}</strong><button type="button" aria-label={`Select ${table.name}`} onClick={onSelect}><ChevronDown size={14} /></button></header>{table.columns.map((column) => <div className={`table-column-row ${connectionStart?.columnId === column.id ? "is-connection-source" : ""}`} key={column.id}><button className="table-column" type="button" onClick={(event) => { event.stopPropagation(); onColumnSelect(column.id); }}><span className="table-column-label">{column.primaryKey && <b title="Primary key">PK</b>}{column.foreignKey && <b title="Foreign key">FK</b>}{column.unique && !column.primaryKey && <b title="Unique">UQ</b>}{!column.nullable && <b title="Not null">NN</b>}{column.name}</span><small>{column.type}</small></button><button className={`connection-handle ${relationshipMode ? "is-visible" : ""}`} type="button" aria-label={`Connect ${table.name}.${column.name}`} title="Connect this column" onMouseDown={(event) => { event.stopPropagation(); onConnectionStart(column.id); }} onMouseUp={(event) => { event.stopPropagation(); if (connectionStart) onConnectionEnd(column.id); }} /></div>)}</article>;
 }
 
 function WorkspaceArea({ area, project, schema, generatedBackend, copyApiKey, copyMessage }) {

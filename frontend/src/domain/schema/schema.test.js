@@ -160,6 +160,56 @@ test("legacy schema upgrades to a versioned document without changing entity IDs
   assert.ok(upgraded.tables[1].constraints.some((constraint) => constraint.type === "foreignKey"));
 });
 
+test("tables without saved positions receive separated canvas positions", () => {
+  const positioned = canonicalizeSchema({
+    tables: [
+      { id: "first", name: "first", columns: [{ id: "first-id", name: "id", type: "uuid" }] },
+      { id: "second", name: "second", columns: [{ id: "second-id", name: "id", type: "uuid" }] },
+      { id: "third", name: "third", columns: [{ id: "third-id", name: "id", type: "uuid" }] },
+      { id: "fourth", name: "fourth", columns: [{ id: "fourth-id", name: "id", type: "uuid" }] },
+    ],
+  });
+
+  const points = positioned.tables.map(({ x, y }) => `${x},${y}`);
+  assert.equal(new Set(points).size, positioned.tables.length);
+  assert.equal(positioned.tables[0].x, 80);
+  assert.equal(positioned.tables[1].x, 380);
+  assert.ok(positioned.tables[3].y > positioned.tables[0].y);
+});
+
+test("legacy add-table offsets are migrated while custom saved positions stay unchanged", () => {
+  const legacyDefaults = canonicalizeSchema({
+    tables: [
+      { id: "first", name: "first", x: 120, y: 120, columns: [] },
+      { id: "second", name: "second", x: 150, y: 150, columns: [] },
+    ],
+  });
+  const customPositions = canonicalizeSchema({
+    tables: [
+      { id: "first", name: "first", x: 120, y: 120, columns: [] },
+      { id: "second", name: "second", x: 190, y: 200, columns: [] },
+    ],
+  });
+
+  assert.deepEqual(legacyDefaults.tables.map(({ x, y }) => ({ x, y })), [{ x: 80, y: 70 }, { x: 380, y: 70 }]);
+  assert.deepEqual(customPositions.tables.map(({ x, y }) => ({ x, y })), [{ x: 120, y: 120 }, { x: 190, y: 200 }]);
+});
+
+test("canonicalization keeps moved positions in sync with serialized coordinates", () => {
+  const original = canonicalizeSchema({
+    schemaVersion: 2,
+    tables: [{ id: "users", name: "users", x: 80, y: 90, columns: [] }],
+  });
+  const moved = canonicalizeSchema({
+    ...original,
+    tables: original.tables.map((table) => ({ ...table, name: "accounts", x: 410, y: 270 })),
+  });
+
+  assert.deepEqual(moved.tables[0].position, { x: 410, y: 270 });
+  assert.equal(moved.tables[0].x, 410);
+  assert.equal(moved.tables[0].y, 270);
+});
+
 test("versioned canonical constraints remain authoritative when a constraint is removed", async () => {
   const { canonicalizeSchema } = await import("./model.js");
   const document = canonicalizeSchema({ schemaVersion: 2, tables: [{ id: "t", name: "t", columns: [{ id: "a", name: "a", type: "text", unique: true }], constraints: [{ id: "uq-a", type: "unique", columns: ["a"] }] }] });

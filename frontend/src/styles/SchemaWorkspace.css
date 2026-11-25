@@ -118,6 +118,18 @@
   transform-origin: top left;
 }
 
+.table-node header {
+  touch-action: none;
+}
+
+.table-node.is-dragging {
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.2);
+}
+
+.table-node.is-dragging header {
+  cursor: grabbing;
+}
+
 .canvas-notice {
   position: absolute;
   top: 58px;

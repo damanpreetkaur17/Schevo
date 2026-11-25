@@ -1,5 +1,6 @@
 import { findColumn, findTable } from "./resolve.js";
 import { canonicalizeSchema } from "./model.js";
+import { findAvailableTablePosition } from "./layout.js";
 
 export function relationshipForColumn(schema, tableId, column) {
   return (schema.relationships || []).find((relationship) => {
@@ -107,8 +108,7 @@ export function createJunctionTable(schema, { leftTableId, leftColumns, rightTab
     id: tableId,
     name: tableName,
     description: `Junction between ${left.name} and ${right.name}.`,
-    x: Math.max(left.x || 0, right.x || 0) + 300,
-    y: Math.max(left.y || 0, right.y || 0),
+    ...findAvailableTablePosition(next.tables, { columns }),
     columns,
     constraints: [{ id: generatedId("pk"), type: "primaryKey", columns: [...leftLocal, ...rightLocal] }],
     indexes: [],
