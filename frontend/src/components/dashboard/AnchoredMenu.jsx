@@ -17,7 +17,7 @@ function placeMenu(anchor, menu, { placement, align }) {
   return { top, left, width };
 }
 
-function AnchoredMenu({ open, anchorRef, onClose, placement = "below", align = "start", label, children }) {
+function AnchoredMenu({ open, anchorRef, onClose, returnFocusRef, placement = "below", align = "start", label, children }) {
   const menuRef = useRef(null);
   const [style, setStyle] = useState(null);
 
@@ -36,7 +36,10 @@ function AnchoredMenu({ open, anchorRef, onClose, placement = "below", align = "
   useEffect(() => {
     if (!open) return undefined;
     const onKey = (event) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") {
+        onClose();
+        returnFocusRef?.current?.focus();
+      }
       const items = [...(menuRef.current?.querySelectorAll("[role='menuitem']") || [])];
       const index = items.indexOf(document.activeElement);
       if (event.key === "ArrowDown") {
@@ -58,7 +61,7 @@ function AnchoredMenu({ open, anchorRef, onClose, placement = "below", align = "
       document.removeEventListener("keydown", onKey);
       document.removeEventListener("mousedown", onPointer);
     };
-  }, [open, onClose, anchorRef]);
+  }, [open, onClose, anchorRef, returnFocusRef]);
 
   if (!open) return null;
   return createPortal(

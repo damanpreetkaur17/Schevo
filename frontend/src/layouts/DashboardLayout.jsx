@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
-  Activity, ChevronDown, Command, FolderKanban, HelpCircle,
+  Activity, Check, ChevronDown, Command, FolderKanban, HelpCircle,
   LayoutDashboard, Menu, Moon, PanelLeftClose, PanelLeftOpen, Search,
   Settings, Sun, X, Workflow, BookOpen, Boxes,
 } from "lucide-react";
@@ -89,6 +89,7 @@ function DashboardLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem("schevo-sidebar") === "collapsed");
   const [commandOpen, setCommandOpen] = useState(false);
+  const [workspaceOpen, setWorkspaceOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -98,6 +99,8 @@ function DashboardLayout() {
   const location = useLocation();
   const accountRef = useRef(null);
   const profileRef = useRef(null);
+  const workspaceRef = useRef(null);
+  const workspaceItemRef = useRef(null);
   const projectId = location.pathname.match(/projects\/([^/]+)/)?.[1];
   const project = projectId ? schemaRepository.get(projectId) : null;
   const isWorkspace = Boolean(project);
@@ -117,6 +120,9 @@ function DashboardLayout() {
     document.documentElement.addEventListener("schevo:toggle-theme", handler);
     return () => document.documentElement.removeEventListener("schevo:toggle-theme", handler);
   }, [toggleTheme]);
+  useEffect(() => {
+    if (workspaceOpen) workspaceItemRef.current?.focus();
+  }, [workspaceOpen]);
   const closeDrawer = () => setDrawerOpen(false);
   const displayName = user?.displayName || "Account";
   const profileInitial = displayName.trim().charAt(0).toUpperCase() || "S";
@@ -137,7 +143,21 @@ function DashboardLayout() {
           <button className="icon-button dashboard-sidebar-close" type="button" aria-label="Close sidebar" onClick={closeDrawer}><X size={18} /></button>
           <button className="icon-button dashboard-collapse" type="button" aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} onClick={() => setCollapsed((value) => !value)}>{collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}</button>
         </div>
-        <button className="workspace-switcher" type="button" title={workspace?.name || "Workspace"}>
+        <button
+          ref={workspaceRef}
+          className="workspace-switcher"
+          type="button"
+          title={workspace?.name || "Workspace"}
+          aria-haspopup="menu"
+          aria-expanded={workspaceOpen}
+          onClick={() => setWorkspaceOpen((open) => !open)}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowDown") {
+              event.preventDefault();
+              setWorkspaceOpen(true);
+            }
+          }}
+        >
           <span className="workspace-dot" /><span className="workspace-copy"><strong>{workspace?.name || "Workspace"}</strong><small>Your workspace</small></span><ChevronDown size={14} />
         </button>
         <nav className="dashboard-nav" aria-label="Workspace navigation">
@@ -166,6 +186,32 @@ function DashboardLayout() {
         <main className="dashboard-main"><Outlet /></main>
       </div>
       <CommandPalette open={commandOpen} onClose={() => setCommandOpen(false)} />
+      <AnchoredMenu
+        open={workspaceOpen}
+        anchorRef={workspaceRef}
+        returnFocusRef={workspaceRef}
+        onClose={() => setWorkspaceOpen(false)}
+        placement="below"
+        align="start"
+        label="Workspace menu"
+      >
+        <div className="workspace-menu-heading">Current workspace</div>
+        <button
+          ref={workspaceItemRef}
+          className="workspace-menu-item"
+          type="button"
+          role="menuitem"
+          aria-current="true"
+          onClick={() => setWorkspaceOpen(false)}
+        >
+          <span className="workspace-menu-item-copy">
+            <strong>{workspace?.name || "Workspace unavailable"}</strong>
+            <small>{workspace ? "Current workspace" : "No workspace information available"}</small>
+          </span>
+          {workspace && <Check size={15} aria-hidden="true" />}
+        </button>
+        <p className="workspace-menu-note">Workspace switching, creation, settings, and team management aren’t available yet.</p>
+      </AnchoredMenu>
       <AnchoredMenu open={profileOpen} anchorRef={profileRef} onClose={() => setProfileOpen(false)} placement="above" align="start" label="Account menu">
         <div className="anchored-menu-copy"><strong>{displayName}</strong><small>{user?.email}</small></div>
         <NavLink role="menuitem" to="/dashboard/settings" onClick={() => setProfileOpen(false)}>Account settings</NavLink>
