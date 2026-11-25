@@ -1,5 +1,5 @@
-import { apiRequest } from "./apiClient";
-import { adoptAccountProjects, isAccountMode, schemaRepository } from "./schemaRepository";
+import { apiRequest } from "./apiClient.js";
+import { adoptAccountProjects, isAccountMode, schemaRepository } from "./schemaRepository.js";
 
 export const projectRepository = {
   async list() {
@@ -10,6 +10,13 @@ export const projectRepository = {
     }
     await new Promise((resolve) => window.setTimeout(resolve, 180));
     return schemaRepository.list();
+  },
+  async delete(id) {
+    if (isAccountMode()) {
+      await schemaRepository.prepareDelete(id);
+      await apiRequest(`/api/v1/projects/${encodeURIComponent(id)}`, { method: "DELETE" });
+    }
+    schemaRepository.remove(id);
   },
   create: schemaRepository.create,
   update: schemaRepository.update,

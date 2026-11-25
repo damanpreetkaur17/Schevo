@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { createApp } from "../src/app.js";
 import { pool, query } from "../src/db/pool.js";
@@ -215,8 +216,53 @@ test("registration, session restore, project persistence, and authorization", as
   });
   assert.equal(deniedWrite.status, 404);
 
+  const kept = await request(base, loginCookies, "/api/v1/projects", {
+    method: "POST",
+    csrf: rotatedSession.data.csrfToken,
+    body: { name: "Keep project", description: "Must remain available" },
+  });
+  assert.equal(kept.status, 201);
+
+  const invalidDelete = await request(base, loginCookies, "/api/v1/projects/not-a-uuid", {
+    method: "DELETE",
+    csrf: rotatedSession.data.csrfToken,
+  });
+  assert.equal(invalidDelete.status, 400);
+
+  const missingDelete = await request(base, loginCookies, `/api/v1/projects/${randomUUID()}`, {
+    method: "DELETE",
+    csrf: rotatedSession.data.csrfToken,
+  });
+  assert.equal(missingDelete.status, 404);
+
+  const unauthorizedDelete = await request(base, otherCookies, `/api/v1/projects/${projectId}`, {
+    method: "DELETE",
+    csrf: other.data.csrfToken,
+  });
+  assert.equal(unauthorizedDelete.status, 404);
+  assert.equal((await query("SELECT id FROM projects WHERE id = $1", [projectId])).rowCount, 1);
+
+  const csrfRejected = await request(base, loginCookies, `/api/v1/projects/${projectId}`, { method: "DELETE" });
+  assert.equal(csrfRejected.status, 403);
+  const deleted = await request(base, loginCookies, `/api/v1/projects/${projectId}`, {
+    method: "DELETE",
+    csrf: rotatedSession.data.csrfToken,
+  });
+  assert.equal(deleted.status, 200);
+  assert.equal((await query("SELECT id FROM projects WHERE id = $1", [projectId])).rowCount, 0);
+  assert.equal((await query("SELECT id FROM project_schema_versions WHERE project_id = $1", [projectId])).rowCount, 0);
+  assert.equal((await query("SELECT id FROM projects WHERE id = $1", [kept.data.project.id])).rowCount, 1);
+  const retainedActivity = await query(
+    "SELECT project_id FROM activity_events WHERE user_id = $1 AND project_name = $2",
+    [registered.data.user.id, "Orders"],
+  );
+  assert.ok(retainedActivity.rowCount > 0);
+  assert.ok(retainedActivity.rows.every((row) => row.project_id === null));
+
   const anonymous = await request(base, jar(), "/api/v1/projects");
   assert.equal(anonymous.status, 401);
+  const anonymousDelete = await request(base, jar(), `/api/v1/projects/${kept.data.project.id}`, { method: "DELETE" });
+  assert.equal(anonymousDelete.status, 401);
 });
 
 test("legacy auth endpoints remain available and issue Argon2-backed JWT sessions", async () => {

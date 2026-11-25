@@ -147,7 +147,7 @@ function ProjectsPage() {
       {status === "ready" && filteredProjects.length > 0 && (
         <div className={`project-grid ${view === "list" ? "is-list" : ""}`}>
           {filteredProjects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
+            <ProjectCard key={project.id} project={project} onDeleted={(id) => setProjects((current) => current.filter((item) => item.id !== id))} />
           ))}
         </div>
       )}
